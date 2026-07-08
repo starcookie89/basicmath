@@ -1,4 +1,4 @@
-# 구구단 배틀 - 배포 & 업데이트 가이드
+# Basic Math World - 배포 & 업데이트 가이드
 
 ## 폴더 구성
 ```
@@ -34,7 +34,7 @@ basicmath/
 
 1. `index.html` (또는 게임 로직)을 원하는 대로 수정
 2. `sw.js` 맨 위의 `CACHE_VERSION` 값을 하나 올리기
-   (예: `'gugu-battle-v1'` → `'gugu-battle-v2'`)
+   (예: `'basicmath-v2'` → `'basicmath-v3'`)
    → 이 숫자를 안 올리면 학습자 태블릿에 저장된 예전 캐시가 계속 보일 수 있어요
 3. GitHub 저장소에 다시 push (또는 Netlify면 폴더 다시 드래그)
 4. 1분 이내 자동 반영됨. 학습자는 앱을 완전히 종료했다가 다시 열면 최신 버전으로 갱신됩니다

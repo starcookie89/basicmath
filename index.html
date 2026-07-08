@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>구구단 배틀! - 구구와 함께 몬스터를 물리쳐요</title>
+<title>Basic Math World - 구구·더더·빼빼·나나와 함께 사칙연산을 정복해요</title>
 
 <!-- PWA: 홈 화면 추가 시 앱 이름/아이콘/실행 방식 정의 -->
 <link rel="manifest" href="manifest.json">
@@ -12,7 +12,7 @@
 <!-- iOS Safari: 홈 화면 추가 시 전체화면 + 아이콘 적용 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="구구단배틀">
+<meta name="apple-mobile-web-app-title" content="BasicMath">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -378,6 +378,69 @@
   .overlay h2{ font-size:clamp(26px,4.5vw,38px); color:var(--coral); }
   .overlay p{ font-size:16px; color:#D9CFF0; }
 
+  /* ---------- MODULE SELECT ---------- */
+  .module-select{
+    display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;
+    width:min(560px, 90vw); margin-top:4px;
+  }
+  .module-btn{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    padding:10px 4px; border-radius:18px;
+    background:linear-gradient(160deg, #ffffff20, #ffffff05), var(--bg-deep3);
+    border:3px solid rgba(255,255,255,0.15);
+    color:var(--cream); font-family:'Jua', sans-serif;
+    font-size:clamp(12px,1.8vw,15px);
+    cursor:pointer;
+    transition:transform .12s ease, background .15s ease, border-color .15s ease;
+  }
+  .module-btn .module-icon{width:clamp(40px,7vw,56px);}
+  .module-btn:active{transform:scale(0.92);}
+  .module-btn.selected{
+    background:linear-gradient(160deg, var(--mango), var(--mango-dark));
+    color:var(--ink);
+    border-color:var(--cream);
+    box-shadow:0 0 0 4px rgba(255,182,39,0.25);
+  }
+
+  /* ---------- TRAVEL STAGE (오버월드 이동 구간) ---------- */
+  .travel-stage{
+    display:flex; flex-direction:column; align-items:center; gap:16px;
+    margin-top:20px; width:100%;
+  }
+
+  /* ---------- FORK STAGE (갈림길) ---------- */
+  .fork-stage{
+    display:flex; flex-direction:column; align-items:center; gap:16px;
+    margin-top:14px; width:100%;
+  }
+  .fork-options{display:flex; gap:14px; flex-wrap:wrap; justify-content:center;}
+  .fork-btn{
+    padding:16px 26px; border:none; border-radius:20px;
+    font-family:'Jua', sans-serif; font-size:clamp(15px,2.4vw,20px);
+    color:var(--ink); cursor:pointer;
+    box-shadow:0 6px 0 rgba(0,0,0,0.2);
+    transition:transform .1s ease;
+  }
+  .fork-btn:active{transform:translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,0.2);}
+  .fork-btn.easy{background:linear-gradient(160deg, var(--mint), var(--mint-dark));}
+  .fork-btn.normal{background:linear-gradient(160deg, var(--mango), var(--mango-dark));}
+  .fork-btn.hard{background:linear-gradient(160deg, var(--coral), var(--coral-dark));}
+
+  /* ---------- TOAST (보너스 안내) ---------- */
+  .toast{
+    position:absolute; top:14px; left:50%;
+    transform:translateX(-50%) translateY(-20px);
+    background:var(--cream); color:var(--ink);
+    font-family:'Jua', sans-serif;
+    padding:10px 20px; border-radius:999px;
+    font-size:clamp(13px,2vw,16px);
+    box-shadow:0 6px 0 rgba(0,0,0,0.15);
+    opacity:0; pointer-events:none; z-index:25;
+    transition:opacity .3s ease, transform .3s ease;
+    white-space:nowrap;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
   /* ---------- RESULT SCREEN ---------- */
   #screen-result{gap:12px;}
   .stars{display:flex; gap:8px; margin:4px 0;}
@@ -417,12 +480,13 @@
   <div class="screen active" id="screen-start">
     <div class="gugu-wrap" id="gugu-start"></div>
     <div class="title-wrap">
-      <h1>구구단 배틀!</h1>
-      <p>구구랑 함께 몬스터를 물리치고 15라운드를 정복해요</p>
+      <h1>Basic Math World</h1>
+      <p>구구·더더·빼빼·나나와 함께 사칙연산을 정복해요</p>
     </div>
-    <div class="dan-select" id="danSelect"></div>
-    <button class="start-btn" id="startBtn" disabled>배틀 시작!</button>
-    <div class="rules-note">생명력은 하트 5개! 문제를 틀리면 하트가 줄어들고, 다 사라지면 1라운드부터 다시 시작해요.<br>5 · 10 · 15라운드는 보스전 — 빈칸에 들어갈 숫자를 직접 입력해요.</div>
+    <div class="module-select" id="moduleSelect"></div>
+    <div class="dan-select" id="danSelect" style="display:none;"></div>
+    <button class="start-btn" id="startBtn" disabled>모험 시작!</button>
+    <div class="rules-note">생명력은 하트 5개! 문제를 틀리면 하트가 줄어들고, 다 사라지면 1라운드부터 다시 시작해요.<br>5 · 10 · 15라운드는 보스전 — 빈칸에 들어갈 숫자를 직접 입력해요.<br>갈림길에서 난이도를 고르고, 길 위의 함정과 회복 이벤트도 만나보세요!</div>
     <button class="secondary-btn" id="installBtn" style="display:none; margin-top:2px;">📲 홈 화면에 추가하기</button>
     <div class="rules-note" id="iosInstallHint" style="display:none;">
       하단 <b>공유 버튼</b>을 누른 뒤 <b>"홈 화면에 추가"</b>를 선택하면 앱처럼 바로 실행할 수 있어요!
@@ -432,6 +496,7 @@
   <!-- ================= PLAY SCREEN ================= -->
   <div class="screen" id="screen-play">
     <div class="damage-flash" id="damageFlash"></div>
+    <div class="toast" id="toast"></div>
     <div class="overlay" id="gameOverOverlay">
       <div class="gugu-wrap sad" id="gugu-gameover" style="animation:none;"></div>
       <h2 class="jua">생명력이 다 떨어졌어요!</h2>
@@ -450,10 +515,10 @@
       <div class="combo-badge" id="comboBadge">콤보 x0</div>
     </div>
 
-    <div class="battle-stage">
+    <div class="battle-stage" id="battleStage">
       <div class="fighter">
         <div class="gugu-wrap" id="gugu-play" style="width:78px;"></div>
-        <span style="font-size:13px; color:var(--mint);">구구</span>
+        <span class="mascot-label" id="mascotLabelPlay" style="font-size:13px; color:var(--mint);">구구</span>
       </div>
       <div class="vs-label">VS</div>
       <div class="fighter">
@@ -471,6 +536,17 @@
       <div class="speech-bubble" id="bossQuestionText">? × ? = ?</div>
       <div class="blank-box active" id="bossInputBox">_</div>
       <div class="keypad" id="keypad"></div>
+    </div>
+
+    <div class="travel-stage" id="travelStage" style="display:none;">
+      <div class="gugu-wrap" id="gugu-travel"></div>
+      <div class="speech-bubble" id="travelText">다음으로 이동해볼까요?</div>
+      <button class="start-btn" id="travelBtn">다음으로 이동 ▶</button>
+    </div>
+
+    <div class="fork-stage" id="forkStage" style="display:none;">
+      <div class="speech-bubble">어떤 길로 갈까요?</div>
+      <div class="fork-options" id="forkOptions"></div>
     </div>
   </div>
 
@@ -491,19 +567,22 @@
 
 <script>
 /* ============================================================
-   구구 마스코트 SVG - 직접 제작한 오리지널 캐릭터 (저작권 프리)
+   마스코트 SVG - 직접 제작한 오리지널 캐릭터 (저작권 프리)
+   4개 연산 모듈이 동일한 신체 구조(타원 몸통+원형 얼굴+더듬이+발)를
+   팔레트/문양만 바꿔 공유한다.
    ============================================================ */
-function guguSVG(){
+function buildMascotSVG({body, ring, antenna, arms=2, glyph=''}){
+  const footFill = '#F2618A';
   return `
   <svg viewBox="0 0 200 220" width="100%" xmlns="http://www.w3.org/2000/svg">
     <ellipse cx="100" cy="205" rx="38" ry="8" fill="rgba(0,0,0,0.25)"/>
-    <path d="M60 140 L20 175 L58 175 Z" fill="#F2618A"/>
-    <path d="M140 140 L180 175 L142 175 Z" fill="#F2618A"/>
-    <ellipse cx="100" cy="110" rx="62" ry="72" fill="#FFB627"/>
+    <path d="M60 140 L20 175 L58 175 Z" fill="${footFill}"/>
+    ${arms===2 ? `<path d="M140 140 L180 175 L142 175 Z" fill="${footFill}"/>` : ''}
+    <ellipse cx="100" cy="110" rx="62" ry="72" fill="${body}"/>
     <ellipse cx="100" cy="110" rx="62" ry="72" fill="url(#body-shade)"/>
     <circle cx="100" cy="108" r="34" fill="#FFF8ED"/>
-    <circle cx="100" cy="108" r="34" fill="none" stroke="#E89A0C" stroke-width="5"/>
-    <g id="gugu-eyes">
+    <circle cx="100" cy="108" r="34" fill="none" stroke="${ring}" stroke-width="5"/>
+    <g class="gugu-eyes">
       <ellipse class="eye" cx="86" cy="105" rx="8" ry="10" fill="#2A1B45"/>
       <ellipse class="eye" cx="114" cy="105" rx="8" ry="10" fill="#2A1B45"/>
       <circle cx="83" cy="101" r="2.4" fill="#fff"/>
@@ -512,10 +591,11 @@ function guguSVG(){
     <ellipse cx="70" cy="120" rx="8" ry="5" fill="#FF8FAB" opacity="0.7"/>
     <ellipse cx="130" cy="120" rx="8" ry="5" fill="#FF8FAB" opacity="0.7"/>
     <path d="M90 122 Q100 130 110 122" stroke="#2A1B45" stroke-width="4" fill="none" stroke-linecap="round"/>
-    <line x1="100" y1="38" x2="100" y2="18" stroke="#E89A0C" stroke-width="4"/>
-    <circle cx="100" cy="14" r="7" fill="#5EEAD4"/>
-    <path d="M40 110 Q20 100 24 80" stroke="#FFB627" stroke-width="14" fill="none" stroke-linecap="round"/>
-    <path d="M160 110 Q180 100 176 80" stroke="#FFB627" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <line x1="100" y1="38" x2="100" y2="18" stroke="${ring}" stroke-width="4"/>
+    <circle cx="100" cy="14" r="7" fill="${antenna}"/>
+    <path d="M40 110 Q20 100 24 80" stroke="${body}" stroke-width="14" fill="none" stroke-linecap="round"/>
+    ${arms===2 ? `<path d="M160 110 Q180 100 176 80" stroke="${body}" stroke-width="14" fill="none" stroke-linecap="round"/>` : ''}
+    ${glyph}
     <defs>
       <radialGradient id="body-shade" cx="35%" cy="30%" r="75%">
         <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
@@ -524,7 +604,34 @@ function guguSVG(){
     </defs>
   </svg>`;
 }
-document.querySelectorAll('#gugu-start, #gugu-play, #gugu-result, #gugu-gameover').forEach(el=>{
+// 구구 (곱셈) - 기존 마스코트, 팔레트/구조 그대로
+function guguSVG(){
+  return buildMascotSVG({ body:'#FFB627', ring:'#E89A0C', antenna:'#5EEAD4', arms:2, glyph:'' });
+}
+// 더더 (덧셈) - 민트 톤 + 가슴에 "+" 문양
+function deodeoSVG(){
+  return buildMascotSVG({ body:'#5EEAD4', ring:'#2DD4BF', antenna:'#FFB627', arms:2,
+    glyph:'<g stroke="#2A1B45" stroke-width="6" stroke-linecap="round"><line x1="90" y1="150" x2="110" y2="150"/><line x1="100" y1="140" x2="100" y2="160"/></g>' });
+}
+// 빼빼 (뺄셈) - 핑크 톤 + 가슴에 "−" 문양, 팔 하나만 (무언가 덜어진 느낌의 시각적 말장난)
+function ppaeppaeSVG(){
+  return buildMascotSVG({ body:'#FF8FAB', ring:'#F2618A', antenna:'#B79CFF', arms:1,
+    glyph:'<line x1="90" y1="150" x2="110" y2="150" stroke="#2A1B45" stroke-width="6" stroke-linecap="round"/>' });
+}
+// 나나 (나눗셈) - 바이올렛 톤 + 가슴에 "÷" 문양
+function nanaSVG(){
+  return buildMascotSVG({ body:'#B79CFF', ring:'#8B6EDB', antenna:'#FFD65C', arms:2,
+    glyph:'<circle cx="100" cy="140" r="4" fill="#2A1B45"/><line x1="90" y1="150" x2="110" y2="150" stroke="#2A1B45" stroke-width="6" stroke-linecap="round"/><circle cx="100" cy="160" r="4" fill="#2A1B45"/>' });
+}
+function applyMascot(moduleId){
+  const mod = MODULES[moduleId];
+  document.querySelectorAll('#gugu-start, #gugu-play, #gugu-result, #gugu-gameover, #gugu-travel').forEach(el=>{
+    el.innerHTML = mod.mascotSVG();
+  });
+  const label = document.getElementById('mascotLabelPlay');
+  if(label) label.textContent = mod.mascotName;
+}
+document.querySelectorAll('#gugu-start, #gugu-play, #gugu-result, #gugu-gameover, #gugu-travel').forEach(el=>{
   el.innerHTML = guguSVG();
 });
 
@@ -579,21 +686,153 @@ function renderMonster(isBoss, seedIndex){
 const ROUND_LENGTH = 15;
 const BOSS_ROUNDS = [5, 10, 15];
 const MAX_LIVES = 5;
+const FORK_ROUNDS = [3, 8, 13];           // 이 조우 번호 직전에 갈림길이 나온다
+const CHAPTERS = [[1,5],[6,10],[11,15]];  // 보스 기준 3챕터 — 함정 배치 단위
+const TIER_ORDER = ['easy','normal','hard'];
+const TRAP_CHANCE_PER_CHAPTER = 0.5;
+const MIN_GAP_BETWEEN_TRAPS = 2;
+const HEAL_ON_HARD_CHANCE = 0.35;
+const EASE_NEXT_ON_HARD_CHANCE = 0.5;
 
 const state = {
+  moduleId: null,
   selectedDans: new Set(),
-  questions: [],
-  index: 0,
+  path: [],
+  pathIndex: 0,
+  encountersCleared: 0,
   lives: MAX_LIVES,
   combo: 0,
   maxCombo: 0,
-  wrongAnswers: [],
+  history: [],
   startTime: 0,
-  bossBlankSlot: null,
-  bossTyped: ''
+  typedInput: '',
+  nextTierDiscount: false,
+  lastQuestion: null
 };
 
-// ---- 단 선택 화면 구성 ----
+function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function pickOne(pool){ return pool[Math.floor(Math.random()*pool.length)]; }
+function sameQuestion(q1, q2){ return q1 && q2 && q1.a===q2.a && q1.b===q2.b && q1.answer===q2.answer; }
+
+// ---- 연산 모듈 레지스트리 ----
+function equationParts(q, slot, opSymbol){
+  const a = slot==='a' ? '?' : q.a;
+  const b = slot==='b' ? '?' : q.b;
+  const answer = slot==='answer' ? '?' : q.answer;
+  return `${a} ${opSymbol} ${b} = ${answer}`;
+}
+const MODULES = {
+  mul: {
+    id:'mul', label:'곱셈', symbol:'×', mascotName:'구구', mascotSVG:guguSVG,
+    needsDanSelect:true, inputMode:'bubble',
+    buildPool(ctx, tier){
+      const bMax = tier==='easy' ? 5 : 9;
+      const pool = [];
+      ctx.dans.forEach(d=>{
+        for(let n=1; n<=bMax; n++){ pool.push({a:d, b:n, answer:d*n}); }
+      });
+      return pool.length ? pool : [{a:2,b:1,answer:2}];
+    },
+    // 'a'(선택한 단)는 절대 빈칸으로 내지 않음 — 학생이 이미 연습 중인 단을 알고 있어서
+    // 눈치로 정답을 맞출 수 있기 때문 (예: 2단 연습 중 ?×7=14 → 답이 2인 걸 계산 없이 유추 가능)
+    pickBlankSlot(q){ return Math.random() < 0.5 ? 'b' : 'answer'; },
+    formatEquation(q, slot){ return equationParts(q, slot, '×'); },
+    generateChoices(q, tier){
+      const correct = q.answer;
+      const wrongSet = new Set();
+      let candidates = [
+        q.a*(q.b+1), q.a*(q.b-1), (q.a+1)*q.b, (q.a-1)*q.b,
+        correct+q.a, correct-q.a, correct+1, correct-1, correct+2, correct-2
+      ];
+      if(tier === 'hard'){
+        candidates = [correct+1, correct-1, correct+2, correct-2, correct+3, correct-3, ...candidates];
+      }
+      candidates = candidates.filter(v => v>0 && v!==correct);
+      const shuffledCand = shuffle(candidates);
+      for(const c of shuffledCand){
+        if(wrongSet.size>=3) break;
+        if(!wrongSet.has(c)) wrongSet.add(c);
+      }
+      let fallback = 1;
+      while(wrongSet.size<3){
+        const v = correct + fallback*(fallback%2===0?1:-1)*3;
+        if(v>0 && v!==correct && !wrongSet.has(v)) wrongSet.add(v);
+        fallback++;
+      }
+      return shuffle([correct, ...Array.from(wrongSet)]);
+    }
+  },
+  add: {
+    id:'add', label:'덧셈', symbol:'+', mascotName:'더더', mascotSVG:deodeoSVG,
+    needsDanSelect:false, inputMode:'keypad',
+    buildPool(ctx, tier){
+      const ranges = { easy:[[1,9],[1,9]], normal:[[1,99],[1,50]], hard:[[1,999],[1,500]] };
+      const [[aMin,aMax],[bMin,bMax]] = ranges[tier] || ranges.normal;
+      const pool = [];
+      for(let i=0;i<30;i++){
+        const a = randInt(aMin,aMax), b = randInt(bMin,bMax);
+        pool.push({a, b, answer:a+b});
+      }
+      return pool;
+    },
+    pickBlankSlot(q){ return TIER_ORDER_SLOTS[Math.floor(Math.random()*3)]; },
+    formatEquation(q, slot){ return equationParts(q, slot, '+'); }
+  },
+  sub: {
+    id:'sub', label:'뺄셈', symbol:'−', mascotName:'빼빼', mascotSVG:ppaeppaeSVG,
+    needsDanSelect:false, inputMode:'keypad',
+    buildPool(ctx, tier){
+      const ranges = { easy:[[1,9],[1,9]], normal:[[1,99],[1,50]], hard:[[1,999],[1,500]] };
+      const [[aMin,aMax],[bMin,bMax]] = ranges[tier] || ranges.normal;
+      const pool = [];
+      for(let i=0;i<30;i++){
+        const x = randInt(aMin,aMax), y = randInt(bMin,bMax);
+        const a = Math.max(x,y), b = Math.min(x,y);
+        pool.push({a, b, answer:a-b});   // a>=b 보장 → 답이 절대 음수가 되지 않음
+      }
+      return pool;
+    },
+    pickBlankSlot(q){ return TIER_ORDER_SLOTS[Math.floor(Math.random()*3)]; },
+    formatEquation(q, slot){ return equationParts(q, slot, '−'); }
+  },
+  div: {
+    id:'div', label:'나눗셈', symbol:'÷', mascotName:'나나', mascotSVG:nanaSVG,
+    needsDanSelect:false, inputMode:'keypad',
+    buildPool(ctx, tier){
+      const ranges = { easy:[[2,5],[1,9]], normal:[[2,9],[1,9]], hard:[[2,12],[2,12]] };
+      const [[bMin,bMax],[cMin,cMax]] = ranges[tier] || ranges.normal;
+      const pool = [];
+      for(let i=0;i<30;i++){
+        const b = randInt(bMin,bMax), c = randInt(cMin,cMax);
+        pool.push({a: b*c, b, answer: c});   // 몫·나누는수를 먼저 뽑고 역산 → 나머지 없음 보장
+      }
+      return pool;
+    },
+    pickBlankSlot(q){ return TIER_ORDER_SLOTS[Math.floor(Math.random()*3)]; },
+    formatEquation(q, slot){ return equationParts(q, slot, '÷'); }
+  }
+};
+const TIER_ORDER_SLOTS = ['a','b','answer'];
+
+// ---- 모듈 선택 화면 구성 ----
+const moduleSelectEl = document.getElementById('moduleSelect');
+Object.values(MODULES).forEach(mod=>{
+  const btn = document.createElement('button');
+  btn.className = 'module-btn';
+  btn.dataset.mod = mod.id;
+  btn.innerHTML = `<div class="module-icon">${mod.mascotSVG()}</div><span>${mod.label}</span>`;
+  btn.addEventListener('click', ()=>{
+    state.moduleId = mod.id;
+    document.querySelectorAll('.module-btn').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('danSelect').style.display = mod.needsDanSelect ? 'grid' : 'none';
+    applyMascot(mod.id);
+    updateStartBtn();
+  });
+  moduleSelectEl.appendChild(btn);
+});
+
+// ---- 단 선택 화면 구성 (곱셈 전용) ----
 const danSelectEl = document.getElementById('danSelect');
 for(let d=2; d<=9; d++){
   const btn = document.createElement('button');
@@ -626,7 +865,9 @@ allBtn.addEventListener('click', ()=>{
 danSelectEl.appendChild(allBtn);
 
 function updateStartBtn(){
-  document.getElementById('startBtn').disabled = state.selectedDans.size === 0;
+  const mod = MODULES[state.moduleId];
+  const ok = !!mod && (!mod.needsDanSelect || state.selectedDans.size > 0);
+  document.getElementById('startBtn').disabled = !ok;
 }
 
 document.getElementById('startBtn').addEventListener('click', startRound);
@@ -642,14 +883,6 @@ function showScreen(id){
   document.getElementById(id).classList.add('active');
 }
 
-// ---- 문제 풀 생성 ----
-function buildQuestionPool(dans){
-  const pool = [];
-  dans.forEach(d=>{
-    for(let n=1; n<=9; n++){ pool.push({a:d, b:n, answer:d*n}); }
-  });
-  return pool;
-}
 function shuffle(arr){
   const a = arr.slice();
   for(let i=a.length-1;i>0;i--){
@@ -658,55 +891,108 @@ function shuffle(arr){
   }
   return a;
 }
-function pickRoundQuestions(dans){
-  const pool = shuffle(buildQuestionPool(dans));
-  const round = [];
-  let i = 0;
-  while(round.length < ROUND_LENGTH){
-    if(i >= pool.length) i = 0;
-    const q = pool[i];
-    if(round.length === 0 || !(round[round.length-1].a===q.a && round[round.length-1].b===q.b)){
-      round.push(q);
+
+// ---- 경로(오버월드) 생성 ----
+function rollTrapSegments(){
+  const trapSet = new Set();
+  let lastTrapIdx = -Infinity;
+  CHAPTERS.forEach(([startEnc, endEnc]) => {
+    const eligible = [];
+    for(let seg = startEnc-1; seg <= endEnc-1; seg++){
+      if(seg === 0) continue;                                  // 런의 첫 이동 구간은 함정 제외
+      if(seg - lastTrapIdx < MIN_GAP_BETWEEN_TRAPS) continue;   // 이전 함정 이후 최소 간격 확보
+      eligible.push(seg);
     }
-    i++;
-    if(i > pool.length*4) break;
-  }
-  return round.slice(0, ROUND_LENGTH);
+    // 챕터(보스 기준 5조우)당 최대 1회
+    if(eligible.length && Math.random() < TRAP_CHANCE_PER_CHAPTER){
+      const idx = eligible[Math.floor(Math.random()*eligible.length)];
+      trapSet.add(idx);
+      lastTrapIdx = idx;
+    }
+  });
+  return trapSet;
 }
-function generateChoices(q){
-  const correct = q.answer;
-  const wrongSet = new Set();
-  const candidates = [
-    q.a*(q.b+1), q.a*(q.b-1), (q.a+1)*q.b, (q.a-1)*q.b,
-    correct+q.a, correct-q.a, correct+1, correct-1, correct+2, correct-2
-  ].filter(v => v>0 && v!==correct);
-  const shuffledCand = shuffle(candidates);
-  for(const c of shuffledCand){
-    if(wrongSet.size>=3) break;
-    if(!wrongSet.has(c)) wrongSet.add(c);
+function buildPathNodes(){
+  const trapSet = rollTrapSegments();
+  const nodes = [];
+  for(let i=0; i<ROUND_LENGTH; i++){
+    const encounterNum = i+1;
+    nodes.push({ type:'travel', segIdx:i, trap: trapSet.has(i) });
+    if(FORK_ROUNDS.includes(encounterNum)){
+      nodes.push({ type:'fork' });
+    }
+    const isBoss = BOSS_ROUNDS.includes(encounterNum);
+    nodes.push({
+      type: isBoss ? 'boss' : 'quiz',
+      encounterNum,
+      tier: isBoss ? 'hard' : 'normal',
+      question: null
+    });
   }
-  let fallback = 1;
-  while(wrongSet.size<3){
-    const v = correct + fallback*(fallback%2===0?1:-1)*3;
-    if(v>0 && v!==correct && !wrongSet.has(v)) wrongSet.add(v);
-    fallback++;
-  }
-  return shuffle([correct, ...Array.from(wrongSet)]);
+  return nodes;
 }
 
-// ---- 라운드 시작 (전체 배틀 리셋) ----
+// ---- 조우 직전 즉석 문제 생성 ----
+function applyTierDiscount(tier){
+  if(!state.nextTierDiscount) return tier;
+  state.nextTierDiscount = false;
+  return TIER_ORDER[Math.max(0, TIER_ORDER.indexOf(tier)-1)];
+}
+function resolveEncounterQuestion(node){
+  if(node.question) return node.question;
+  const module = MODULES[state.moduleId];
+  const tier = applyTierDiscount(node.tier);
+  const ctx = { dans: state.selectedDans };
+  let q, guard = 0;
+  do { q = pickOne(module.buildPool(ctx, tier)); guard++; }
+  while(state.lastQuestion && sameQuestion(q, state.lastQuestion) && guard < 20);
+  node.question = q;
+  node.resolvedTier = tier;
+  node.blankSlot = module.pickBlankSlot(q);
+  node.historyEntry = { op: module.id, symbol: module.symbol, tier, a:q.a, b:q.b, answer:q.answer, wrong:false };
+  state.history.push(node.historyEntry);
+  state.lastQuestion = q;
+  return q;
+}
+
+// ---- 위험-보상: 어려운 문제 정답 보너스 ----
+function showToast(msg){
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.remove('show'); void toast.offsetWidth; toast.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=> toast.classList.remove('show'), 1800);
+}
+function onCorrectAnswer(node){
+  if(node.resolvedTier === 'hard'){
+    if(state.lives < MAX_LIVES && Math.random() < HEAL_ON_HARD_CHANCE){
+      state.lives++;
+      renderHearts();
+      showToast('정답 보너스로 생명력을 회복했어요! ❤️');
+    }
+    if(Math.random() < EASE_NEXT_ON_HARD_CHANCE){
+      state.nextTierDiscount = true;
+      showToast('정답 보너스로 다음 문제가 쉬워졌어요!');
+    }
+  }
+}
+
+// ---- 라운드 시작 (전체 오버월드 리셋) ----
 function startRound(){
-  state.questions = pickRoundQuestions(Array.from(state.selectedDans));
-  state.index = 0;
+  state.path = buildPathNodes();
+  state.pathIndex = 0;
+  state.encountersCleared = 0;
   state.lives = MAX_LIVES;
   state.combo = 0;
   state.maxCombo = 0;
-  state.wrongAnswers = [];
+  state.history = [];
+  state.lastQuestion = null;
+  state.nextTierDiscount = false;
   state.startTime = Date.now();
 
   renderHearts();
   showScreen('screen-play');
-  renderRound();
+  renderPathNode();
 }
 
 function renderHearts(){
@@ -737,8 +1023,8 @@ function loseLife(){
 
 function updateRoundTrack(){
   const fill = document.getElementById('roundFill');
-  fill.style.width = ((state.index)/ROUND_LENGTH*100) + '%';
-  document.getElementById('roundLabel').textContent = `${state.index+1}/${ROUND_LENGTH}`;
+  fill.style.width = ((state.encountersCleared)/ROUND_LENGTH*100) + '%';
+  document.getElementById('roundLabel').textContent = `${state.encountersCleared+1}/${ROUND_LENGTH}`;
   const track = document.getElementById('roundTrack') || document.querySelector('.round-track');
   track.querySelectorAll('.boss-mark').forEach(m=>m.remove());
   BOSS_ROUNDS.forEach(r=>{
@@ -749,31 +1035,99 @@ function updateRoundTrack(){
   });
 }
 
-// ---- 라운드(문제) 렌더 ----
+// ---- 경로 노드 렌더 (오버월드 진행) ----
 let inputLocked = false;
 
-function renderRound(){
-  if(state.index >= ROUND_LENGTH){ endRound(); return; }
+function hideAllStages(){
+  document.getElementById('travelStage').style.display = 'none';
+  document.getElementById('forkStage').style.display = 'none';
+  document.getElementById('battleStage').style.display = 'none';
+  document.getElementById('normalQuestionArea').style.display = 'none';
+  document.getElementById('playArea').style.display = 'none';
+  document.getElementById('bossInputWrap').style.display = 'none';
+}
+
+function renderPathNode(){
+  if(state.pathIndex >= state.path.length){ endRound(); return; }
   inputLocked = false;
   updateRoundTrack();
+  hideAllStages();
 
-  const roundNum = state.index + 1;
-  const isBoss = BOSS_ROUNDS.includes(roundNum);
-  renderMonster(isBoss, state.index);
+  const node = state.path[state.pathIndex];
+  if(node.type === 'travel'){
+    renderTravelStage(node);
+  } else if(node.type === 'fork'){
+    renderForkStage(node);
+  } else {
+    renderEncounter(node);
+  }
+}
 
+function renderTravelStage(node){
+  const stage = document.getElementById('travelStage');
+  const btn = document.getElementById('travelBtn');
+  const text = document.getElementById('travelText');
+  stage.style.display = 'flex';
+
+  if(node.trap){
+    btn.style.display = 'none';
+    text.textContent = '앗, 함정에 걸렸어요! 😵';
+    reactGugu('gugu-travel', 'sad');
+    playTone(220, 0.15);
+    loseLife();
+    if(state.lives > 0){
+      setTimeout(()=>{ state.pathIndex++; renderPathNode(); }, 900);
+    }
+  } else {
+    btn.style.display = 'inline-block';
+    text.textContent = '다음으로 이동해볼까요?';
+    reactGugu('gugu-travel', 'cheer');
+    btn.onclick = ()=>{ state.pathIndex++; renderPathNode(); };
+  }
+}
+
+function renderForkStage(node){
+  document.getElementById('forkStage').style.display = 'flex';
+  const wrap = document.getElementById('forkOptions');
+  wrap.innerHTML = '';
+  const labels = { easy:'쉬움', normal:'보통', hard:'어려움' };
+  TIER_ORDER.forEach(tier=>{
+    const btn = document.createElement('button');
+    btn.className = 'fork-btn ' + tier;
+    btn.textContent = labels[tier];
+    btn.addEventListener('click', ()=> handleForkPick(tier));
+    wrap.appendChild(btn);
+  });
+}
+
+function handleForkPick(tier){
+  const nextNode = state.path[state.pathIndex+1];
+  if(nextNode && (nextNode.type==='quiz' || nextNode.type==='boss')){
+    nextNode.tier = tier;
+  }
+  state.pathIndex++;
+  renderPathNode();
+}
+
+function renderEncounter(node){
+  const isBoss = node.type === 'boss';
+  document.getElementById('battleStage').style.display = 'flex';
+  renderMonster(isBoss, state.encountersCleared);
   document.getElementById('monsterHpFill').style.width = '100%';
 
-  if(isBoss){
-    showBossBanner();
-    document.getElementById('normalQuestionArea').style.display = 'none';
-    document.getElementById('playArea').style.display = 'none';
-    document.getElementById('bossInputWrap').style.display = 'flex';
-    renderBossQuestion();
-  } else {
+  if(isBoss) showBossBanner();
+
+  const q = resolveEncounterQuestion(node);
+  const module = MODULES[state.moduleId];
+  const useBubble = module.inputMode === 'bubble' && !isBoss;
+
+  if(useBubble){
     document.getElementById('normalQuestionArea').style.display = 'flex';
     document.getElementById('playArea').style.display = 'block';
-    document.getElementById('bossInputWrap').style.display = 'none';
-    renderNormalQuestion();
+    renderNormalQuestion(node, q);
+  } else {
+    document.getElementById('bossInputWrap').style.display = 'flex';
+    renderBossQuestion(node, q);
   }
 }
 
@@ -786,14 +1140,14 @@ function showBossBanner(){
   setTimeout(()=> banner.remove(), 1100);
 }
 
-// ---- 일반 라운드 ----
-function renderNormalQuestion(){
-  const q = state.questions[state.index];
-  document.getElementById('questionText').textContent = `${q.a} × ${q.b} = ?`;
+// ---- 일반 문제 (버블 선택 — 곱셈 일반 라운드 전용) ----
+function renderNormalQuestion(node, q){
+  const module = MODULES[state.moduleId];
+  document.getElementById('questionText').textContent = module.formatEquation(q, 'answer');
 
   const playArea = document.getElementById('playArea');
   playArea.innerHTML = '';
-  const choices = generateChoices(q);
+  const choices = module.generateChoices(q, node.resolvedTier);
   const areaW = playArea.clientWidth || 600;
   const areaH = playArea.clientHeight || 260;
   const bubbleSize = Math.min(104, Math.max(74, areaW*0.15));
@@ -824,38 +1178,23 @@ function handleNormalAnswer(bubbleEl, val, q){
   } else {
     bubbleEl.classList.add('wrong-fade');
     setTimeout(()=> bubbleEl.classList.add('gone'), 350);
-    onWrong(q, ()=>{ /* stay on same round, bubble already removed */ });
+    onWrong(q, ()=>{ /* stay on same node, bubble already removed */ });
   }
 }
 
-// ---- 보스 라운드 ----
-function pickBlankSlot(){
-  // 'a'(선택한 단)는 절대 빈칸으로 내지 않음 — 학생이 이미 연습 중인 단을 알고 있어서
-  // 눈치로 정답을 맞출 수 있기 때문 (예: 2단 연습 중 ?×7=14 → 답이 2인 걸 계산 없이 유추 가능)
-  return Math.random() < 0.5 ? 'b' : 'answer';
-}
-function renderBossQuestion(){
-  const q = state.questions[state.index];
-  if(state.bossBlankSlot === null || state.bossTyped !== '__keep__'){
-    state.bossBlankSlot = pickBlankSlot();
-  }
-  state.bossTyped = '';
-  const slot = state.bossBlankSlot;
-
-  const parts = {
-    a: slot==='a' ? '?' : q.a,
-    b: slot==='b' ? '?' : q.b,
-    answer: slot==='answer' ? '?' : q.answer
-  };
-  document.getElementById('bossQuestionText').textContent = `${parts.a} × ${parts.b} = ${parts.answer}`;
+// ---- 빈칸 채우기 문제 (곱셈 보스 + 덧셈/뺄셈/나눗셈 전체) ----
+function renderBossQuestion(node, q){
+  state.typedInput = '';
+  const module = MODULES[state.moduleId];
+  document.getElementById('bossQuestionText').textContent = module.formatEquation(q, node.blankSlot);
   document.getElementById('bossInputBox').textContent = '_';
-
   buildKeypad();
 }
 
-function bossCorrectValue(q){
-  if(state.bossBlankSlot === 'a') return q.a;
-  if(state.bossBlankSlot === 'b') return q.b;
+function expectedBlankValue(node){
+  const q = node.question;
+  if(node.blankSlot === 'a') return q.a;
+  if(node.blankSlot === 'b') return q.b;
   return q.answer;
 }
 
@@ -875,29 +1214,29 @@ function buildKeypad(){
 function handleKeyPress(k){
   if(inputLocked) return;
   if(k === 'back'){
-    state.bossTyped = state.bossTyped.slice(0,-1);
+    state.typedInput = state.typedInput.slice(0,-1);
   } else if(k === 'confirm'){
     submitBossAnswer();
     return;
   } else {
-    if(state.bossTyped.length < 3) state.bossTyped += k;
+    if(state.typedInput.length < 4) state.typedInput += k;
   }
-  document.getElementById('bossInputBox').textContent = state.bossTyped || '_';
+  document.getElementById('bossInputBox').textContent = state.typedInput || '_';
 }
 
 function submitBossAnswer(){
-  const q = state.questions[state.index];
-  const correctVal = bossCorrectValue(q);
-  const typed = parseInt(state.bossTyped, 10);
-  if(state.bossTyped !== '' && typed === correctVal){
+  const node = state.path[state.pathIndex];
+  const correctVal = expectedBlankValue(node);
+  const typed = parseInt(state.typedInput, 10);
+  if(state.typedInput !== '' && typed === correctVal){
     inputLocked = true;
     onCorrect();
   } else {
     const box = document.getElementById('bossInputBox');
     box.classList.add('wrong-fade');
     setTimeout(()=> box.classList.remove('wrong-fade'), 350);
-    onWrong(q, ()=>{
-      state.bossTyped = '';
+    onWrong(node.question, ()=>{
+      state.typedInput = '';
       document.getElementById('bossInputBox').textContent = '_';
     });
   }
@@ -905,6 +1244,7 @@ function submitBossAnswer(){
 
 // ---- 공통 정답/오답 처리 ----
 function onCorrect(){
+  const node = state.path[state.pathIndex];
   state.combo++;
   state.maxCombo = Math.max(state.maxCombo, state.combo);
   updateComboBadge();
@@ -916,12 +1256,14 @@ function onCorrect(){
   monster.classList.add('hit');
   spawnSparksAt(monster);
 
+  onCorrectAnswer(node);
+
   setTimeout(()=>{
     monster.classList.add('defeated');
     setTimeout(()=>{
-      state.index++;
-      state.bossTyped = '__keep__'; // reset marker so next boss picks fresh slot
-      renderRound();
+      state.encountersCleared++;
+      state.pathIndex++;
+      renderPathNode();
     }, 350);
   }, 250);
 }
@@ -933,8 +1275,8 @@ function onWrong(q, afterCallback){
   playTone(220, 0.15);
   loseLife();
 
-  const already = state.wrongAnswers.find(w=>w.a===q.a && w.b===q.b);
-  if(!already) state.wrongAnswers.push({a:q.a, b:q.b, answer:q.answer});
+  const node = state.path[state.pathIndex];
+  if(node && node.historyEntry) node.historyEntry.wrong = true;
 
   if(state.lives > 0){
     setTimeout(afterCallback, 400);
@@ -992,7 +1334,8 @@ function playTone(freq, dur){
 // ---- 전체 클리어 결과 ----
 function endRound(){
   const elapsed = Math.round((Date.now()-state.startTime)/1000);
-  const mistakes = state.wrongAnswers.length;
+  const missed = state.history.filter(h=>h.wrong);
+  const mistakes = missed.length;
   let starCount = 1;
   if(mistakes === 0) starCount = 3;
   else if(mistakes <= 3) starCount = 2;
@@ -1012,7 +1355,7 @@ function endRound(){
 
   const missList = document.getElementById('missList');
   missList.innerHTML = mistakes
-    ? '헷갈렸던 문제: ' + state.wrongAnswers.map(w=>`${w.a}×${w.b}=${w.answer}`).join('  /  ')
+    ? '헷갈렸던 문제: ' + missed.map(w=>`${w.a}${w.symbol}${w.b}=${w.answer}`).join('  /  ')
     : '한 번도 틀리지 않았어요! 완벽해요 🎉';
 
   reactGugu('gugu-result', 'cheer');
