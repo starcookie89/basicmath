@@ -766,7 +766,8 @@ const MODULES = {
     id:'add', label:'덧셈', symbol:'+', mascotName:'더더', mascotSVG:deodeoSVG,
     needsDanSelect:false, inputMode:'keypad',
     buildPool(ctx, tier){
-      const ranges = { easy:[[1,9],[1,9]], normal:[[1,99],[1,50]], hard:[[1,999],[1,500]] };
+      // 한 자리~두 자리 수 범위만 사용 — 세 자리 수가 나오는 조합은 만들지 않음
+      const ranges = { easy:[[1,9],[1,9]], normal:[[1,9],[10,89]], hard:[[10,49],[10,49]] };
       const [[aMin,aMax],[bMin,bMax]] = ranges[tier] || ranges.normal;
       const pool = [];
       for(let i=0;i<30;i++){
@@ -782,7 +783,8 @@ const MODULES = {
     id:'sub', label:'뺄셈', symbol:'−', mascotName:'빼빼', mascotSVG:ppaeppaeSVG,
     needsDanSelect:false, inputMode:'keypad',
     buildPool(ctx, tier){
-      const ranges = { easy:[[1,9],[1,9]], normal:[[1,99],[1,50]], hard:[[1,999],[1,500]] };
+      // 한 자리~두 자리 수 범위만 사용 — 세 자리 수가 나오는 조합은 만들지 않음
+      const ranges = { easy:[[1,9],[1,9]], normal:[[1,9],[10,89]], hard:[[10,49],[10,49]] };
       const [[aMin,aMax],[bMin,bMax]] = ranges[tier] || ranges.normal;
       const pool = [];
       for(let i=0;i<30;i++){
@@ -799,12 +801,11 @@ const MODULES = {
     id:'div', label:'나눗셈', symbol:'÷', mascotName:'나나', mascotSVG:nanaSVG,
     needsDanSelect:false, inputMode:'keypad',
     buildPool(ctx, tier){
-      const ranges = { easy:[[2,5],[1,9]], normal:[[2,9],[1,9]], hard:[[2,12],[2,12]] };
-      const [[bMin,bMax],[cMin,cMax]] = ranges[tier] || ranges.normal;
+      // 곱셈(2~9단)의 역 — 같은 수 조합을 나눗셈으로 뒤집어서 출제 (세 자리 수 없음)
+      const nMax = tier==='easy' ? 5 : 9;
       const pool = [];
-      for(let i=0;i<30;i++){
-        const b = randInt(bMin,bMax), c = randInt(cMin,cMax);
-        pool.push({a: b*c, b, answer: c});   // 몫·나누는수를 먼저 뽑고 역산 → 나머지 없음 보장
+      for(let d=2; d<=9; d++){
+        for(let n=1; n<=nMax; n++){ pool.push({a: d*n, b: d, answer: n}); }
       }
       return pool;
     },
@@ -816,7 +817,7 @@ const TIER_ORDER_SLOTS = ['a','b','answer'];
 
 // ---- 모듈 선택 화면 구성 ----
 const moduleSelectEl = document.getElementById('moduleSelect');
-Object.values(MODULES).forEach(mod=>{
+['add','sub','mul','div'].map(id=>MODULES[id]).forEach(mod=>{
   const btn = document.createElement('button');
   btn.className = 'module-btn';
   btn.dataset.mod = mod.id;
