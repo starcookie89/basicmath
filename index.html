@@ -830,10 +830,9 @@ function handleNormalAnswer(bubbleEl, val, q){
 
 // ---- 보스 라운드 ----
 function pickBlankSlot(){
-  const r = Math.random();
-  if(r < 0.4) return 'a';
-  if(r < 0.8) return 'b';
-  return 'answer';
+  // 'a'(선택한 단)는 절대 빈칸으로 내지 않음 — 학생이 이미 연습 중인 단을 알고 있어서
+  // 눈치로 정답을 맞출 수 있기 때문 (예: 2단 연습 중 ?×7=14 → 답이 2인 걸 계산 없이 유추 가능)
+  return Math.random() < 0.5 ? 'b' : 'answer';
 }
 function renderBossQuestion(){
   const q = state.questions[state.index];
