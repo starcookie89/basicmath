@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>구구단 배틀! - 구구와 함께 몬스터를 물리쳐요</title>
+
+<!-- PWA: 홈 화면 추가 시 앱 이름/아이콘/실행 방식 정의 -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#241B3A">
+
+<!-- iOS Safari: 홈 화면 추가 시 전체화면 + 아이콘 적용 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="구구단배틀">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#241B3A;
+    --bg-deep2:#3B2A5C;
+    --bg-deep3:#4C3775;
+    --mango:#FFB627;
+    --mango-dark:#E89A0C;
+    --mint:#5EEAD4;
+    --mint-dark:#2DD4BF;
+    --pink:#FF8FAB;
+    --pink-dark:#F2618A;
+    --coral:#FF6B6B;
+    --coral-dark:#E23F3F;
+    --cream:#FFF8ED;
+    --ink:#2A1B45;
+    --gold:#FFD65C;
+    --violet:#B79CFF;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none;}
+
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    overflow:hidden; touch-action:manipulation;
+    font-family:'Gaegu', sans-serif;
+    background:var(--bg-deep);
+    color:var(--cream);
+  }
+
+  #app{
+    position:relative;
+    width:100%; height:100vh; height:100dvh;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,255,255,0.10) 0%, transparent 3%),
+      radial-gradient(circle at 80% 15%, rgba(255,255,255,0.08) 0%, transparent 2.5%),
+      radial-gradient(circle at 60% 70%, rgba(255,255,255,0.10) 0%, transparent 2%),
+      radial-gradient(circle at 30% 85%, rgba(255,255,255,0.07) 0%, transparent 2%),
+      radial-gradient(circle at 90% 60%, rgba(255,255,255,0.09) 0%, transparent 2%),
+      linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-deep2) 55%, var(--bg-deep3) 100%);
+    overflow:hidden;
+  }
+
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    opacity:0; pointer-events:none;
+    transition:opacity .35s ease;
+    padding:14px;
+  }
+  .screen.active{opacity:1; pointer-events:auto;}
+
+  h1,h2,h3, .jua{font-family:'Jua', sans-serif; font-weight:400;}
+
+  /* ---------- START SCREEN ---------- */
+  #screen-start{gap:14px;}
+  .title-wrap{text-align:center; margin-bottom:2px;}
+  .title-wrap h1{
+    font-size:clamp(30px, 5.6vw, 48px);
+    margin:0;
+    color:var(--cream);
+    text-shadow:0 4px 0 rgba(0,0,0,0.25), 0 0 24px rgba(255,182,39,0.35);
+    letter-spacing:1px;
+  }
+  .title-wrap p{
+    margin:6px 0 0; font-size:clamp(14px,2.1vw,18px); color:var(--mint);
+  }
+
+  .dan-select{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:10px;
+    width:min(560px, 90vw);
+    margin-top:4px;
+  }
+  .dan-btn{
+    aspect-ratio:1/1;
+    border:none; border-radius:20px;
+    background:linear-gradient(160deg, #ffffff20, #ffffff05), var(--bg-deep3);
+    border:3px solid rgba(255,255,255,0.15);
+    color:var(--cream);
+    font-family:'Jua', sans-serif;
+    font-size:clamp(18px,3vw,26px);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    transition:transform .12s ease, background .15s ease, border-color .15s ease;
+  }
+  .dan-btn:active{transform:scale(0.9);}
+  .dan-btn.selected{
+    background:linear-gradient(160deg, var(--mint), var(--mint-dark));
+    color:var(--ink);
+    border-color:var(--cream);
+    box-shadow:0 0 0 4px rgba(94,234,212,0.25);
+  }
+  .dan-btn.all{
+    grid-column:span 4;
+    aspect-ratio:auto;
+    height:50px;
+    font-size:clamp(15px,2.3vw,19px);
+    background:linear-gradient(160deg, var(--pink), var(--pink-dark));
+    color:var(--ink);
+    border-color:rgba(255,255,255,0.3);
+  }
+  .dan-btn.all.selected{
+    background:linear-gradient(160deg, var(--mango), var(--mango-dark));
+  }
+
+  .start-btn{
+    margin-top:6px;
+    padding:14px 42px;
+    border:none; border-radius:999px;
+    background:linear-gradient(160deg, var(--mango), var(--mango-dark));
+    color:var(--ink);
+    font-family:'Jua', sans-serif;
+    font-size:clamp(18px,2.6vw,24px);
+    box-shadow:0 6px 0 var(--mango-dark), 0 10px 20px rgba(0,0,0,0.3);
+    cursor:pointer;
+    transition:transform .1s ease;
+  }
+  .start-btn:active{transform:translateY(4px); box-shadow:0 2px 0 var(--mango-dark);}
+  .start-btn:disabled{opacity:0.4; box-shadow:none;}
+
+  .rules-note{
+    font-size:13px; color:#D9CFF0; text-align:center; max-width:480px; line-height:1.6;
+  }
+
+  /* ---------- MASCOT: 구구 ---------- */
+  .gugu-wrap{
+    width:clamp(80px,12vw,112px);
+    filter:drop-shadow(0 10px 14px rgba(0,0,0,0.35));
+    animation:bob 2.6s ease-in-out infinite;
+  }
+  @keyframes bob{
+    0%,100%{transform:translateY(0) rotate(-2deg);}
+    50%{transform:translateY(-10px) rotate(2deg);}
+  }
+  .gugu-wrap.cheer{ animation:cheer .6s ease; }
+  @keyframes cheer{
+    0%{transform:scale(1) rotate(0);}
+    30%{transform:scale(1.25) rotate(-10deg);}
+    60%{transform:scale(1.1) rotate(10deg);}
+    100%{transform:scale(1) rotate(0);}
+  }
+  .gugu-wrap.sad{ animation:sad .4s ease; }
+  @keyframes sad{
+    0%,100%{transform:translateX(0);}
+    25%{transform:translateX(-6px) rotate(-4deg);}
+    75%{transform:translateX(6px) rotate(4deg);}
+  }
+  .eye{transition:transform .15s ease;}
+  .blink{transform:scaleY(0.1);}
+
+  /* ---------- PLAY SCREEN ---------- */
+  #screen-play{justify-content:flex-start; padding-top:10px; gap:0;}
+
+  .topbar{
+    width:100%; max-width:760px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:10px; padding:0 4px;
+  }
+  .hearts-row{display:flex; gap:4px;}
+  .heart{width:22px; height:22px; transition:transform .2s ease;}
+  .heart.lost{opacity:0.25; transform:scale(0.7);}
+  .heart.hit{animation:heartHit .4s ease;}
+  @keyframes heartHit{
+    0%{transform:scale(1.3);} 100%{transform:scale(0.7);}
+  }
+
+  .round-track{
+    position:relative; flex:1; height:10px; margin:0 10px;
+    background:rgba(255,255,255,0.12); border-radius:6px; overflow:visible;
+  }
+  .round-track .fill{
+    position:absolute; left:0; top:0; bottom:0;
+    background:linear-gradient(90deg, var(--mint), var(--mango));
+    border-radius:6px; transition:width .3s ease;
+  }
+  .round-track .boss-mark{
+    position:absolute; top:-4px; width:3px; height:18px;
+    background:var(--gold); border-radius:2px;
+  }
+  .round-label{font-family:'Jua', sans-serif; font-size:14px; white-space:nowrap; color:var(--cream);}
+
+  .combo-badge{
+    font-family:'Jua', sans-serif;
+    font-size:14px;
+    background:linear-gradient(160deg, var(--pink), var(--pink-dark));
+    color:var(--ink);
+    padding:4px 12px;
+    border-radius:999px;
+    opacity:0;
+    transform:scale(0.8);
+    transition:all .2s ease;
+    white-space:nowrap;
+  }
+  .combo-badge.show{opacity:1; transform:scale(1);}
+
+  /* battle stage: gugu (left) vs monster (right) */
+  .battle-stage{
+    display:flex; align-items:center; justify-content:space-between;
+    width:100%; max-width:760px; margin-top:6px; padding:0 10px;
+  }
+  .fighter{display:flex; flex-direction:column; align-items:center; gap:4px;}
+  .monster-hp{width:70px; height:8px; background:rgba(255,255,255,0.15); border-radius:5px; overflow:hidden;}
+  .monster-hp .fill{height:100%; width:100%; background:linear-gradient(90deg, var(--coral), var(--coral-dark)); transition:width .25s ease;}
+  .monster-wrap{width:clamp(74px,11vw,100px); transition:transform .15s ease;}
+  .monster-wrap.boss{width:clamp(110px,16vw,150px);}
+  .monster-wrap.hit{animation:monsterHit .35s ease;}
+  @keyframes monsterHit{
+    0%,100%{transform:translateX(0);}
+    30%{transform:translateX(6px) scale(0.95);}
+    60%{transform:translateX(-6px);}
+  }
+  .monster-wrap.defeated{animation:monsterDefeat .5s ease forwards;}
+  @keyframes monsterDefeat{
+    0%{transform:scale(1); opacity:1;}
+    100%{transform:scale(0) rotate(30deg); opacity:0;}
+  }
+
+  .vs-label{font-family:'Jua',sans-serif; font-size:20px; color:var(--gold); opacity:0.8;}
+
+  .question-area{
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    margin:8px 0 4px;
+  }
+  .speech-bubble{
+    position:relative;
+    background:var(--cream);
+    color:var(--ink);
+    border-radius:22px;
+    padding:12px 22px;
+    font-family:'Jua', sans-serif;
+    font-size:clamp(24px,4.4vw,38px);
+    box-shadow:0 6px 0 rgba(0,0,0,0.15);
+    letter-spacing:1px;
+  }
+
+  .play-area{
+    position:relative;
+    width:100%; max-width:760px; flex:1;
+    margin-top:4px;
+  }
+
+  .bubble{
+    position:absolute;
+    width:clamp(74px,14vw,104px); height:clamp(74px,14vw,104px);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Jua', sans-serif;
+    font-size:clamp(22px,4.2vw,32px);
+    color:var(--ink);
+    border:4px solid rgba(255,255,255,0.55);
+    cursor:pointer;
+    animation:drift ease-in-out infinite;
+    transition:transform .12s ease, opacity .3s ease;
+  }
+  .bubble:active{transform:scale(0.92);}
+  .bubble .ring{
+    position:absolute; inset:10%;
+    border-radius:50%;
+    border:3px solid rgba(255,255,255,0.35);
+    pointer-events:none;
+  }
+  .bubble.c0{background:radial-gradient(circle at 32% 28%, #fff, var(--mango) 60%);}
+  .bubble.c1{background:radial-gradient(circle at 32% 28%, #fff, var(--mint) 60%);}
+  .bubble.c2{background:radial-gradient(circle at 32% 28%, #fff, var(--pink) 60%);}
+  .bubble.c3{background:radial-gradient(circle at 32% 28%, #fff, var(--violet) 60%);}
+
+  @keyframes drift{
+    0%,100%{ transform:translateY(0);}
+    50%{ transform:translateY(-14px);}
+  }
+  .bubble.correct-pop{ animation:pop .4s ease forwards; }
+  @keyframes pop{
+    0%{transform:scale(1);}
+    40%{transform:scale(1.3); filter:brightness(1.3);}
+    100%{transform:scale(0); opacity:0;}
+  }
+  .bubble.wrong-fade{
+    animation:shake .35s ease;
+    pointer-events:none;
+  }
+  .bubble.wrong-fade.gone{ opacity:0; transform:scale(0.6); }
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-8px) rotate(-4deg);}
+    40%{transform:translateX(8px) rotate(4deg);}
+    60%{transform:translateX(-6px) rotate(-3deg);}
+    80%{transform:translateX(6px) rotate(3deg);}
+  }
+
+  .spark{
+    position:absolute; width:8px; height:8px; border-radius:50%;
+    pointer-events:none; animation:sparkfly .6s ease-out forwards;
+  }
+  @keyframes sparkfly{ to{ transform:translate(var(--dx), var(--dy)) scale(0); opacity:0; } }
+
+  /* boss fill-in-blank UI */
+  .boss-input-wrap{
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    margin-top:10px;
+  }
+  .blank-box{
+    min-width:70px; padding:6px 10px;
+    background:var(--cream); color:var(--ink);
+    border-radius:14px; font-family:'Jua',sans-serif;
+    font-size:clamp(24px,4.4vw,38px);
+    box-shadow:0 4px 0 rgba(0,0,0,0.15);
+  }
+  .blank-box.active{ box-shadow:0 0 0 4px rgba(255,214,92,0.5), 0 4px 0 rgba(0,0,0,0.15); }
+  .keypad{
+    display:grid; grid-template-columns:repeat(3, 64px); gap:10px;
+  }
+  .key{
+    height:56px; border-radius:16px; border:none;
+    background:linear-gradient(160deg, #ffffff22, #ffffff05), var(--bg-deep3);
+    border:2px solid rgba(255,255,255,0.15);
+    color:var(--cream); font-family:'Jua',sans-serif; font-size:22px;
+    cursor:pointer;
+  }
+  .key:active{ transform:scale(0.92); }
+  .key.wide{ grid-column:span 1; }
+  .key.confirm{ background:linear-gradient(160deg, var(--mint), var(--mint-dark)); color:var(--ink); }
+  .key.back{ background:linear-gradient(160deg, var(--coral), var(--coral-dark)); color:var(--ink); }
+
+  .boss-banner{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    background:rgba(36,27,58,0.85); z-index:20;
+    font-family:'Jua',sans-serif; font-size:clamp(30px,6vw,50px); color:var(--gold);
+    text-shadow:0 0 20px rgba(255,214,92,0.6);
+    animation:bannerPop 1.1s ease forwards;
+    pointer-events:none;
+  }
+  @keyframes bannerPop{
+    0%{opacity:0; transform:scale(0.6);}
+    20%{opacity:1; transform:scale(1.1);}
+    35%{transform:scale(1);}
+    80%{opacity:1;}
+    100%{opacity:0;}
+  }
+
+  /* damage flash overlay */
+  .damage-flash{
+    position:absolute; inset:0; background:rgba(255,107,107,0.35);
+    opacity:0; pointer-events:none; z-index:15;
+  }
+  .damage-flash.show{ animation:flashOut .4s ease; }
+  @keyframes flashOut{
+    0%{opacity:0.8;} 100%{opacity:0;}
+  }
+
+  /* game over overlay */
+  .overlay{
+    position:absolute; inset:0; z-index:30;
+    background:rgba(36,27,58,0.92);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; opacity:0; pointer-events:none; transition:opacity .3s ease;
+  }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+  .overlay h2{ font-size:clamp(26px,4.5vw,38px); color:var(--coral); }
+  .overlay p{ font-size:16px; color:#D9CFF0; }
+
+  /* ---------- RESULT SCREEN ---------- */
+  #screen-result{gap:12px;}
+  .stars{display:flex; gap:8px; margin:4px 0;}
+  .star-icon{font-size:clamp(34px,5.6vw,50px); filter:grayscale(1) opacity(0.3); transition:filter .3s ease, transform .3s ease;}
+  .star-icon.lit{filter:none; transform:scale(1.1);}
+  .result-stats{
+    background:rgba(255,255,255,0.08);
+    border-radius:20px;
+    padding:14px 26px;
+    text-align:center;
+    font-size:clamp(15px,2.3vw,19px);
+    line-height:1.7;
+  }
+  .result-stats b{color:var(--mango); font-family:'Jua',sans-serif;}
+  .miss-list{
+    max-width:600px; text-align:center;
+    font-size:14px; color:#D9CFF0;
+    max-height:70px; overflow:auto;
+  }
+  .btn-row{display:flex; gap:14px; margin-top:4px;}
+  .secondary-btn{
+    padding:13px 26px;
+    border:3px solid rgba(255,255,255,0.3);
+    border-radius:999px;
+    background:transparent;
+    color:var(--cream);
+    font-family:'Jua', sans-serif;
+    font-size:17px;
+    cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ================= START SCREEN ================= -->
+  <div class="screen active" id="screen-start">
+    <div class="gugu-wrap" id="gugu-start"></div>
+    <div class="title-wrap">
+      <h1>구구단 배틀!</h1>
+      <p>구구랑 함께 몬스터를 물리치고 15라운드를 정복해요</p>
+    </div>
+    <div class="dan-select" id="danSelect"></div>
+    <button class="start-btn" id="startBtn" disabled>배틀 시작!</button>
+    <div class="rules-note">생명력은 하트 5개! 문제를 틀리면 하트가 줄어들고, 다 사라지면 1라운드부터 다시 시작해요.<br>5 · 10 · 15라운드는 보스전 — 빈칸에 들어갈 숫자를 직접 입력해요.</div>
+    <button class="secondary-btn" id="installBtn" style="display:none; margin-top:2px;">📲 홈 화면에 추가하기</button>
+    <div class="rules-note" id="iosInstallHint" style="display:none;">
+      하단 <b>공유 버튼</b>을 누른 뒤 <b>"홈 화면에 추가"</b>를 선택하면 앱처럼 바로 실행할 수 있어요!
+    </div>
+  </div>
+
+  <!-- ================= PLAY SCREEN ================= -->
+  <div class="screen" id="screen-play">
+    <div class="damage-flash" id="damageFlash"></div>
+    <div class="overlay" id="gameOverOverlay">
+      <div class="gugu-wrap sad" id="gugu-gameover" style="animation:none;"></div>
+      <h2 class="jua">생명력이 다 떨어졌어요!</h2>
+      <p>처음부터 다시 도전해봐요</p>
+      <button class="start-btn" id="restartFromOverBtn">1라운드부터 다시!</button>
+    </div>
+
+    <div class="topbar">
+      <div class="hearts-row" id="heartsRow"></div>
+      <div class="round-track">
+        <div class="fill" id="roundFill"></div>
+      </div>
+      <div class="round-label" id="roundLabel">1/15</div>
+    </div>
+    <div style="display:flex; justify-content:center; width:100%;">
+      <div class="combo-badge" id="comboBadge">콤보 x0</div>
+    </div>
+
+    <div class="battle-stage">
+      <div class="fighter">
+        <div class="gugu-wrap" id="gugu-play" style="width:78px;"></div>
+        <span style="font-size:13px; color:var(--mint);">구구</span>
+      </div>
+      <div class="vs-label">VS</div>
+      <div class="fighter">
+        <div class="monster-wrap" id="monsterWrap"></div>
+        <div class="monster-hp"><div class="fill" id="monsterHpFill"></div></div>
+      </div>
+    </div>
+
+    <div class="question-area" id="normalQuestionArea">
+      <div class="speech-bubble" id="questionText">? × ? = ?</div>
+    </div>
+    <div class="play-area" id="playArea"></div>
+
+    <div class="boss-input-wrap" id="bossInputWrap" style="display:none;">
+      <div class="speech-bubble" id="bossQuestionText">? × ? = ?</div>
+      <div class="blank-box active" id="bossInputBox">_</div>
+      <div class="keypad" id="keypad"></div>
+    </div>
+  </div>
+
+  <!-- ================= RESULT SCREEN ================= -->
+  <div class="screen" id="screen-result">
+    <div class="gugu-wrap" id="gugu-result"></div>
+    <h2 class="jua" style="font-size:clamp(24px,4vw,34px); margin:4px 0;">모든 라운드 클리어! 🎉</h2>
+    <div class="stars" id="starsRow"></div>
+    <div class="result-stats" id="resultStats"></div>
+    <div class="miss-list" id="missList"></div>
+    <div class="btn-row">
+      <button class="start-btn" id="retryBtn">다시 도전</button>
+      <button class="secondary-btn" id="menuBtn">단 다시 고르기</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   구구 마스코트 SVG - 직접 제작한 오리지널 캐릭터 (저작권 프리)
+   ============================================================ */
+function guguSVG(){
+  return `
+  <svg viewBox="0 0 200 220" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="100" cy="205" rx="38" ry="8" fill="rgba(0,0,0,0.25)"/>
+    <path d="M60 140 L20 175 L58 175 Z" fill="#F2618A"/>
+    <path d="M140 140 L180 175 L142 175 Z" fill="#F2618A"/>
+    <ellipse cx="100" cy="110" rx="62" ry="72" fill="#FFB627"/>
+    <ellipse cx="100" cy="110" rx="62" ry="72" fill="url(#body-shade)"/>
+    <circle cx="100" cy="108" r="34" fill="#FFF8ED"/>
+    <circle cx="100" cy="108" r="34" fill="none" stroke="#E89A0C" stroke-width="5"/>
+    <g id="gugu-eyes">
+      <ellipse class="eye" cx="86" cy="105" rx="8" ry="10" fill="#2A1B45"/>
+      <ellipse class="eye" cx="114" cy="105" rx="8" ry="10" fill="#2A1B45"/>
+      <circle cx="83" cy="101" r="2.4" fill="#fff"/>
+      <circle cx="111" cy="101" r="2.4" fill="#fff"/>
+    </g>
+    <ellipse cx="70" cy="120" rx="8" ry="5" fill="#FF8FAB" opacity="0.7"/>
+    <ellipse cx="130" cy="120" rx="8" ry="5" fill="#FF8FAB" opacity="0.7"/>
+    <path d="M90 122 Q100 130 110 122" stroke="#2A1B45" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <line x1="100" y1="38" x2="100" y2="18" stroke="#E89A0C" stroke-width="4"/>
+    <circle cx="100" cy="14" r="7" fill="#5EEAD4"/>
+    <path d="M40 110 Q20 100 24 80" stroke="#FFB627" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <path d="M160 110 Q180 100 176 80" stroke="#FFB627" stroke-width="14" fill="none" stroke-linecap="round"/>
+    <defs>
+      <radialGradient id="body-shade" cx="35%" cy="30%" r="75%">
+        <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35"/>
+        <stop offset="60%" stop-color="#ffffff" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+  </svg>`;
+}
+document.querySelectorAll('#gugu-start, #gugu-play, #gugu-result, #gugu-gameover').forEach(el=>{
+  el.innerHTML = guguSVG();
+});
+
+function randomBlink(){
+  document.querySelectorAll('.eye').forEach(e=>e.classList.add('blink'));
+  setTimeout(()=>{ document.querySelectorAll('.eye').forEach(e=>e.classList.remove('blink')); }, 140);
+  setTimeout(randomBlink, 2000 + Math.random()*2500);
+}
+randomBlink();
+
+function reactGugu(id, mood){
+  const el = document.getElementById(id);
+  el.classList.remove('cheer','sad');
+  void el.offsetWidth;
+  el.classList.add(mood);
+}
+
+/* ============================================================
+   몬스터 SVG - 절차적으로 색만 바뀌는 오리지널 몬스터
+   ============================================================ */
+function monsterSVG(isBoss){
+  return `
+  <svg viewBox="0 0 160 160" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="80" cy="150" rx="34" ry="7" fill="rgba(0,0,0,0.3)"/>
+    ${isBoss ? `<path d="M50 45 L58 18 L70 40 L80 12 L90 40 L102 18 L110 45 Z" fill="#FFD65C"/>` : ''}
+    <path d="M40 70 Q30 30 80 28 Q130 30 120 70 Q128 110 80 128 Q32 110 40 70 Z" fill="var(--mcolor)"/>
+    <circle cx="80" cy="72" r="26" fill="#FFF8ED"/>
+    <circle cx="80" cy="72" r="14" fill="#2A1B45"/>
+    <circle cx="85" cy="66" r="4" fill="#fff"/>
+    <path d="M55 105 Q80 118 105 105" stroke="#2A1B45" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M58 108 L54 118 L64 110 Z" fill="#2A1B45"/>
+    <path d="M102 108 L106 118 L96 110 Z" fill="#2A1B45"/>
+    <path d="M35 55 L20 45 L28 62 Z" fill="var(--mcolor)"/>
+    <path d="M125 55 L140 45 L132 62 Z" fill="var(--mcolor)"/>
+  </svg>`;
+}
+
+const MONSTER_COLORS = ['#B79CFF','#5EEAD4','#FF8FAB','#7FD8A6','#9FB4FF'];
+const BOSS_COLOR = '#FF6B6B';
+
+function renderMonster(isBoss, seedIndex){
+  const wrap = document.getElementById('monsterWrap');
+  wrap.classList.toggle('boss', isBoss);
+  wrap.style.setProperty('--mcolor', isBoss ? BOSS_COLOR : MONSTER_COLORS[seedIndex % MONSTER_COLORS.length]);
+  wrap.innerHTML = monsterSVG(isBoss);
+  wrap.classList.remove('hit','defeated');
+}
+
+/* ============================================================
+   게임 상태 및 로직
+   ============================================================ */
+const ROUND_LENGTH = 15;
+const BOSS_ROUNDS = [5, 10, 15];
+const MAX_LIVES = 5;
+
+const state = {
+  selectedDans: new Set(),
+  questions: [],
+  index: 0,
+  lives: MAX_LIVES,
+  combo: 0,
+  maxCombo: 0,
+  wrongAnswers: [],
+  startTime: 0,
+  bossBlankSlot: null,
+  bossTyped: ''
+};
+
+// ---- 단 선택 화면 구성 ----
+const danSelectEl = document.getElementById('danSelect');
+for(let d=2; d<=9; d++){
+  const btn = document.createElement('button');
+  btn.className = 'dan-btn';
+  btn.textContent = d + '단';
+  btn.dataset.dan = d;
+  btn.addEventListener('click', ()=>{
+    if(state.selectedDans.has(d)){
+      state.selectedDans.delete(d);
+      btn.classList.remove('selected');
+    } else {
+      state.selectedDans.add(d);
+      btn.classList.add('selected');
+    }
+    document.getElementById('allBtn').classList.remove('selected');
+    updateStartBtn();
+  });
+  danSelectEl.appendChild(btn);
+}
+const allBtn = document.createElement('button');
+allBtn.className = 'dan-btn all';
+allBtn.id = 'allBtn';
+allBtn.textContent = '전체 랜덤 (2~9단)';
+allBtn.addEventListener('click', ()=>{
+  state.selectedDans = new Set([2,3,4,5,6,7,8,9]);
+  document.querySelectorAll('.dan-btn:not(.all)').forEach(b=>b.classList.add('selected'));
+  allBtn.classList.add('selected');
+  updateStartBtn();
+});
+danSelectEl.appendChild(allBtn);
+
+function updateStartBtn(){
+  document.getElementById('startBtn').disabled = state.selectedDans.size === 0;
+}
+
+document.getElementById('startBtn').addEventListener('click', startRound);
+document.getElementById('retryBtn').addEventListener('click', startRound);
+document.getElementById('menuBtn').addEventListener('click', ()=> showScreen('screen-start'));
+document.getElementById('restartFromOverBtn').addEventListener('click', ()=>{
+  document.getElementById('gameOverOverlay').classList.remove('show');
+  startRound();
+});
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ---- 문제 풀 생성 ----
+function buildQuestionPool(dans){
+  const pool = [];
+  dans.forEach(d=>{
+    for(let n=1; n<=9; n++){ pool.push({a:d, b:n, answer:d*n}); }
+  });
+  return pool;
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function pickRoundQuestions(dans){
+  const pool = shuffle(buildQuestionPool(dans));
+  const round = [];
+  let i = 0;
+  while(round.length < ROUND_LENGTH){
+    if(i >= pool.length) i = 0;
+    const q = pool[i];
+    if(round.length === 0 || !(round[round.length-1].a===q.a && round[round.length-1].b===q.b)){
+      round.push(q);
+    }
+    i++;
+    if(i > pool.length*4) break;
+  }
+  return round.slice(0, ROUND_LENGTH);
+}
+function generateChoices(q){
+  const correct = q.answer;
+  const wrongSet = new Set();
+  const candidates = [
+    q.a*(q.b+1), q.a*(q.b-1), (q.a+1)*q.b, (q.a-1)*q.b,
+    correct+q.a, correct-q.a, correct+1, correct-1, correct+2, correct-2
+  ].filter(v => v>0 && v!==correct);
+  const shuffledCand = shuffle(candidates);
+  for(const c of shuffledCand){
+    if(wrongSet.size>=3) break;
+    if(!wrongSet.has(c)) wrongSet.add(c);
+  }
+  let fallback = 1;
+  while(wrongSet.size<3){
+    const v = correct + fallback*(fallback%2===0?1:-1)*3;
+    if(v>0 && v!==correct && !wrongSet.has(v)) wrongSet.add(v);
+    fallback++;
+  }
+  return shuffle([correct, ...Array.from(wrongSet)]);
+}
+
+// ---- 라운드 시작 (전체 배틀 리셋) ----
+function startRound(){
+  state.questions = pickRoundQuestions(Array.from(state.selectedDans));
+  state.index = 0;
+  state.lives = MAX_LIVES;
+  state.combo = 0;
+  state.maxCombo = 0;
+  state.wrongAnswers = [];
+  state.startTime = Date.now();
+
+  renderHearts();
+  showScreen('screen-play');
+  renderRound();
+}
+
+function renderHearts(){
+  const wrap = document.getElementById('heartsRow');
+  wrap.innerHTML = '';
+  for(let i=0;i<MAX_LIVES;i++){
+    const h = document.createElement('div');
+    h.className = 'heart';
+    h.innerHTML = `<svg viewBox="0 0 32 29" width="100%"><path d="M16 28 C16 28 2 18.5 2 9.5 C2 3.8 6.6 0 11.2 0 C13.8 0 15.4 1.4 16 2.4 C16.6 1.4 18.2 0 20.8 0 C25.4 0 30 3.8 30 9.5 C30 18.5 16 28 16 28Z" fill="${i < state.lives ? '#FF6B6B' : 'rgba(255,255,255,0.15)'}"/></svg>`;
+    wrap.appendChild(h);
+  }
+}
+
+function loseLife(){
+  state.lives--;
+  const hearts = document.querySelectorAll('#heartsRow .heart');
+  renderHearts();
+  const lastHeart = document.querySelectorAll('#heartsRow .heart')[state.lives];
+  if(lastHeart){ lastHeart.classList.add('hit'); setTimeout(()=>lastHeart.classList.remove('hit'), 400); }
+
+  const flash = document.getElementById('damageFlash');
+  flash.classList.remove('show'); void flash.offsetWidth; flash.classList.add('show');
+
+  if(state.lives <= 0){
+    setTimeout(()=>{ document.getElementById('gameOverOverlay').classList.add('show'); }, 500);
+  }
+}
+
+function updateRoundTrack(){
+  const fill = document.getElementById('roundFill');
+  fill.style.width = ((state.index)/ROUND_LENGTH*100) + '%';
+  document.getElementById('roundLabel').textContent = `${state.index+1}/${ROUND_LENGTH}`;
+  const track = document.getElementById('roundTrack') || document.querySelector('.round-track');
+  track.querySelectorAll('.boss-mark').forEach(m=>m.remove());
+  BOSS_ROUNDS.forEach(r=>{
+    const mark = document.createElement('div');
+    mark.className = 'boss-mark';
+    mark.style.left = ((r-1)/ROUND_LENGTH*100) + '%';
+    track.appendChild(mark);
+  });
+}
+
+// ---- 라운드(문제) 렌더 ----
+let inputLocked = false;
+
+function renderRound(){
+  if(state.index >= ROUND_LENGTH){ endRound(); return; }
+  inputLocked = false;
+  updateRoundTrack();
+
+  const roundNum = state.index + 1;
+  const isBoss = BOSS_ROUNDS.includes(roundNum);
+  renderMonster(isBoss, state.index);
+
+  document.getElementById('monsterHpFill').style.width = '100%';
+
+  if(isBoss){
+    showBossBanner();
+    document.getElementById('normalQuestionArea').style.display = 'none';
+    document.getElementById('playArea').style.display = 'none';
+    document.getElementById('bossInputWrap').style.display = 'flex';
+    renderBossQuestion();
+  } else {
+    document.getElementById('normalQuestionArea').style.display = 'flex';
+    document.getElementById('playArea').style.display = 'block';
+    document.getElementById('bossInputWrap').style.display = 'none';
+    renderNormalQuestion();
+  }
+}
+
+function showBossBanner(){
+  const stage = document.getElementById('screen-play');
+  const banner = document.createElement('div');
+  banner.className = 'boss-banner';
+  banner.textContent = '⚡ 보스 등장! ⚡';
+  stage.appendChild(banner);
+  setTimeout(()=> banner.remove(), 1100);
+}
+
+// ---- 일반 라운드 ----
+function renderNormalQuestion(){
+  const q = state.questions[state.index];
+  document.getElementById('questionText').textContent = `${q.a} × ${q.b} = ?`;
+
+  const playArea = document.getElementById('playArea');
+  playArea.innerHTML = '';
+  const choices = generateChoices(q);
+  const areaW = playArea.clientWidth || 600;
+  const areaH = playArea.clientHeight || 260;
+  const bubbleSize = Math.min(104, Math.max(74, areaW*0.15));
+  const cols = choices.length;
+  const slotW = areaW / cols;
+
+  choices.forEach((val, idx)=>{
+    const b = document.createElement('div');
+    b.className = `bubble c${idx}`;
+    b.style.left = (slotW*idx + (slotW-bubbleSize)/2) + 'px';
+    b.style.top = (Math.random()*(areaH*0.35)) + 'px';
+    b.style.width = bubbleSize+'px';
+    b.style.height = bubbleSize+'px';
+    b.style.animationDuration = (2.2 + Math.random()*1.4) + 's';
+    b.style.animationDelay = (Math.random()*0.6) + 's';
+    b.textContent = val;
+    b.innerHTML += '<div class="ring"></div>';
+    b.addEventListener('click', ()=> handleNormalAnswer(b, val, q));
+    playArea.appendChild(b);
+  });
+}
+
+function handleNormalAnswer(bubbleEl, val, q){
+  if(inputLocked) return;
+  if(val === q.answer){
+    inputLocked = true;
+    onCorrect();
+  } else {
+    bubbleEl.classList.add('wrong-fade');
+    setTimeout(()=> bubbleEl.classList.add('gone'), 350);
+    onWrong(q, ()=>{ /* stay on same round, bubble already removed */ });
+  }
+}
+
+// ---- 보스 라운드 ----
+function pickBlankSlot(){
+  const r = Math.random();
+  if(r < 0.4) return 'a';
+  if(r < 0.8) return 'b';
+  return 'answer';
+}
+function renderBossQuestion(){
+  const q = state.questions[state.index];
+  if(state.bossBlankSlot === null || state.bossTyped !== '__keep__'){
+    state.bossBlankSlot = pickBlankSlot();
+  }
+  state.bossTyped = '';
+  const slot = state.bossBlankSlot;
+
+  const parts = {
+    a: slot==='a' ? '?' : q.a,
+    b: slot==='b' ? '?' : q.b,
+    answer: slot==='answer' ? '?' : q.answer
+  };
+  document.getElementById('bossQuestionText').textContent = `${parts.a} × ${parts.b} = ${parts.answer}`;
+  document.getElementById('bossInputBox').textContent = '_';
+
+  buildKeypad();
+}
+
+function bossCorrectValue(q){
+  if(state.bossBlankSlot === 'a') return q.a;
+  if(state.bossBlankSlot === 'b') return q.b;
+  return q.answer;
+}
+
+function buildKeypad(){
+  const keypad = document.getElementById('keypad');
+  keypad.innerHTML = '';
+  const layout = ['1','2','3','4','5','6','7','8','9','back','0','confirm'];
+  layout.forEach(k=>{
+    const btn = document.createElement('button');
+    btn.className = 'key' + (k==='back'?' back':'') + (k==='confirm'?' confirm':'');
+    btn.textContent = k==='back' ? '⌫' : (k==='confirm' ? '확인' : k);
+    btn.addEventListener('click', ()=> handleKeyPress(k));
+    keypad.appendChild(btn);
+  });
+}
+
+function handleKeyPress(k){
+  if(inputLocked) return;
+  if(k === 'back'){
+    state.bossTyped = state.bossTyped.slice(0,-1);
+  } else if(k === 'confirm'){
+    submitBossAnswer();
+    return;
+  } else {
+    if(state.bossTyped.length < 3) state.bossTyped += k;
+  }
+  document.getElementById('bossInputBox').textContent = state.bossTyped || '_';
+}
+
+function submitBossAnswer(){
+  const q = state.questions[state.index];
+  const correctVal = bossCorrectValue(q);
+  const typed = parseInt(state.bossTyped, 10);
+  if(state.bossTyped !== '' && typed === correctVal){
+    inputLocked = true;
+    onCorrect();
+  } else {
+    const box = document.getElementById('bossInputBox');
+    box.classList.add('wrong-fade');
+    setTimeout(()=> box.classList.remove('wrong-fade'), 350);
+    onWrong(q, ()=>{
+      state.bossTyped = '';
+      document.getElementById('bossInputBox').textContent = '_';
+    });
+  }
+}
+
+// ---- 공통 정답/오답 처리 ----
+function onCorrect(){
+  state.combo++;
+  state.maxCombo = Math.max(state.maxCombo, state.combo);
+  updateComboBadge();
+  reactGugu('gugu-play','cheer');
+  playTone(660, 0.12);
+
+  document.getElementById('monsterHpFill').style.width = '0%';
+  const monster = document.getElementById('monsterWrap');
+  monster.classList.add('hit');
+  spawnSparksAt(monster);
+
+  setTimeout(()=>{
+    monster.classList.add('defeated');
+    setTimeout(()=>{
+      state.index++;
+      state.bossTyped = '__keep__'; // reset marker so next boss picks fresh slot
+      renderRound();
+    }, 350);
+  }, 250);
+}
+
+function onWrong(q, afterCallback){
+  state.combo = 0;
+  updateComboBadge();
+  reactGugu('gugu-play','sad');
+  playTone(220, 0.15);
+  loseLife();
+
+  const already = state.wrongAnswers.find(w=>w.a===q.a && w.b===q.b);
+  if(!already) state.wrongAnswers.push({a:q.a, b:q.b, answer:q.answer});
+
+  if(state.lives > 0){
+    setTimeout(afterCallback, 400);
+  }
+}
+
+function updateComboBadge(){
+  const badge = document.getElementById('comboBadge');
+  if(state.combo >= 2){
+    badge.textContent = `콤보 x${state.combo}`;
+    badge.classList.add('show');
+  } else {
+    badge.classList.remove('show');
+  }
+}
+
+function spawnSparksAt(targetEl){
+  const rect = targetEl.getBoundingClientRect();
+  const stage = document.getElementById('screen-play');
+  const stageRect = stage.getBoundingClientRect();
+  const cx = rect.left - stageRect.left + rect.width/2;
+  const cy = rect.top - stageRect.top + rect.height/2;
+  const colors = ['#FFB627','#5EEAD4','#FF8FAB','#B79CFF'];
+  for(let i=0;i<10;i++){
+    const s = document.createElement('div');
+    s.className = 'spark';
+    const angle = (Math.PI*2*i)/10;
+    const dist = 40 + Math.random()*30;
+    s.style.setProperty('--dx', Math.cos(angle)*dist+'px');
+    s.style.setProperty('--dy', Math.sin(angle)*dist+'px');
+    s.style.left = cx+'px';
+    s.style.top = cy+'px';
+    s.style.background = colors[i%colors.length];
+    s.style.position = 'absolute';
+    stage.appendChild(s);
+    setTimeout(()=>s.remove(), 620);
+  }
+}
+
+let audioCtx;
+function playTone(freq, dur){
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+
+// ---- 전체 클리어 결과 ----
+function endRound(){
+  const elapsed = Math.round((Date.now()-state.startTime)/1000);
+  const mistakes = state.wrongAnswers.length;
+  let starCount = 1;
+  if(mistakes === 0) starCount = 3;
+  else if(mistakes <= 3) starCount = 2;
+
+  const starsRow = document.getElementById('starsRow');
+  starsRow.innerHTML = '';
+  for(let i=0;i<3;i++){
+    const s = document.createElement('span');
+    s.className = 'star-icon' + (i<starCount?' lit':'');
+    s.textContent = '⭐';
+    starsRow.appendChild(s);
+  }
+
+  document.getElementById('resultStats').innerHTML =
+    `15라운드 전체 클리어! 남은 생명 <b>${state.lives}개</b><br>` +
+    `최고 콤보 <b>${state.maxCombo}</b> · 걸린 시간 <b>${elapsed}초</b>`;
+
+  const missList = document.getElementById('missList');
+  missList.innerHTML = mistakes
+    ? '헷갈렸던 문제: ' + state.wrongAnswers.map(w=>`${w.a}×${w.b}=${w.answer}`).join('  /  ')
+    : '한 번도 틀리지 않았어요! 완벽해요 🎉';
+
+  reactGugu('gugu-result', 'cheer');
+  showScreen('screen-result');
+}
+
+/* ============================================================
+   PWA: 서비스워커 등록 + 홈 화면 추가 안내
+   (파일을 로컬에서 직접 열면(file://) 서비스워커는 등록되지 않고,
+    게임 자체는 그대로 정상 작동합니다. GitHub Pages 등으로 https 배포 시에만 활성화됨)
+   ============================================================ */
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+
+// Android/Chrome: 브라우저가 설치 가능하다고 판단하면 버튼을 보여줌
+let deferredInstallPrompt = null;
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  document.getElementById('installBtn').style.display = 'inline-block';
+});
+document.getElementById('installBtn').addEventListener('click', async ()=>{
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  document.getElementById('installBtn').style.display = 'none';
+});
+
+// iOS Safari는 자동 설치 프롬프트가 없어서 안내 문구를 대신 보여줌
+(function showIosHintIfNeeded(){
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  if(isIos && !isStandalone){
+    document.getElementById('iosInstallHint').style.display = 'block';
+  }
+})();
+</script>
+</body>
+</html>
