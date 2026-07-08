@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Basic Math World - 구구·더더·빼빼·나나와 함께 사칙연산을 정복해요</title>
 
 <!-- PWA: 홈 화면 추가 시 앱 이름/아이콘/실행 방식 정의 -->
@@ -378,6 +378,24 @@
   .overlay h2{ font-size:clamp(26px,4.5vw,38px); color:var(--coral); }
   .overlay p{ font-size:16px; color:#D9CFF0; }
 
+  /* ---------- 세로모드 안내 (이 게임은 가로모드 전용) ---------- */
+  .rotate-hint{
+    display:none;
+    position:fixed; inset:0; z-index:9999;
+    background:var(--bg-deep);
+    flex-direction:column; align-items:center; justify-content:center; gap:16px;
+    text-align:center; padding:24px;
+  }
+  .rotate-hint .rotate-icon{ font-size:56px; animation:rotateHintSpin 1.8s ease-in-out infinite; }
+  @keyframes rotateHintSpin{
+    0%,100%{ transform:rotate(0deg); } 50%{ transform:rotate(90deg); }
+  }
+  .rotate-hint p{ font-family:'Jua', sans-serif; font-size:clamp(16px,4vw,22px); color:var(--cream); max-width:320px; }
+  @media (orientation: portrait){
+    .rotate-hint{ display:flex; }
+    #app{ display:none; }
+  }
+
   /* ---------- MODULE SELECT ---------- */
   .module-select{
     display:grid; grid-template-columns:repeat(4, 1fr); gap:10px;
@@ -432,7 +450,7 @@
 
   /* ---------- 이동 진행 바 + 방향키/가상 패드 ---------- */
   .move-progress{
-    position:absolute; bottom:104px; left:50%; transform:translateX(-50%);
+    position:absolute; bottom:calc(104px + env(safe-area-inset-bottom, 0px)); left:50%; transform:translateX(-50%);
     width:min(280px, 60vw); height:8px;
     background:rgba(255,255,255,0.15); border-radius:6px; overflow:hidden;
   }
@@ -442,7 +460,7 @@
     border-radius:6px;
   }
   .dpad{
-    position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
+    position:absolute; bottom:calc(22px + env(safe-area-inset-bottom, 0px)); left:50%; transform:translateX(-50%);
     display:flex; gap:28px; z-index:12;
   }
   .dpad-btn{
@@ -512,6 +530,10 @@
 </style>
 </head>
 <body>
+<div class="rotate-hint" id="rotateHint">
+  <div class="rotate-icon">📱</div>
+  <p>기기를 가로로 돌려주세요!<br>이 게임은 가로 화면 전용이에요.</p>
+</div>
 <div id="app">
 
   <!-- ================= START SCREEN ================= -->
