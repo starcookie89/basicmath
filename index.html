@@ -1010,6 +1010,17 @@ function rollTrapSegments(){
   });
   return trapSet;
 }
+// 덧셈/뺄셈은 15단계에 걸쳐 점점 어려워짐 — 1~9단계는 한자리+한자리, 10단계부터 두자리+두자리.
+// (갈림길에서 직접 고른 난이도, 보스 난이도는 이 기본값과 무관하게 그대로 유지됨)
+const PROGRESSIVE_TIER_MODULES = ['add', 'sub'];
+const PROGRESSIVE_HARD_FROM_ENCOUNTER = 10;
+function defaultTierForEncounter(encounterNum, isBoss){
+  if(isBoss) return 'hard';
+  if(PROGRESSIVE_TIER_MODULES.includes(state.moduleId)){
+    return encounterNum < PROGRESSIVE_HARD_FROM_ENCOUNTER ? 'easy' : 'hard';
+  }
+  return 'normal';
+}
 function buildPathNodes(){
   const trapSet = rollTrapSegments();
   const nodes = [];
@@ -1023,7 +1034,7 @@ function buildPathNodes(){
     nodes.push({
       type: isBoss ? 'boss' : 'quiz',
       encounterNum,
-      tier: isBoss ? 'hard' : 'normal',
+      tier: defaultTierForEncounter(encounterNum, isBoss),
       question: null
     });
   }
