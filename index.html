@@ -425,6 +425,44 @@
   .fork-btn.easy{background:linear-gradient(160deg, var(--mint), var(--mint-dark));}
   .fork-btn.normal{background:linear-gradient(160deg, var(--mango), var(--mango-dark));}
   .fork-btn.hard{background:linear-gradient(160deg, var(--coral), var(--coral-dark));}
+  .fork-btn.active{
+    box-shadow:0 0 0 4px rgba(255,255,255,0.7), 0 6px 0 rgba(0,0,0,0.2);
+    transform:scale(1.06);
+  }
+
+  /* ---------- 이동 진행 바 + 방향키/가상 패드 ---------- */
+  .move-progress{
+    position:absolute; bottom:104px; left:50%; transform:translateX(-50%);
+    width:min(280px, 60vw); height:8px;
+    background:rgba(255,255,255,0.15); border-radius:6px; overflow:hidden;
+  }
+  .move-progress .fill{
+    height:100%; width:0%;
+    background:linear-gradient(90deg, var(--mint), var(--mango));
+    border-radius:6px;
+  }
+  .dpad{
+    position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
+    display:flex; gap:28px; z-index:12;
+  }
+  .dpad-btn{
+    width:64px; height:64px; border-radius:50%; border:none;
+    background:linear-gradient(160deg, #ffffff22, #ffffff05), var(--bg-deep3);
+    border:3px solid rgba(255,255,255,0.25);
+    color:var(--cream); font-size:26px; font-family:'Jua', sans-serif;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; touch-action:none;
+    transition:transform .1s ease, background .15s ease;
+  }
+  .dpad-btn.pressed{
+    background:linear-gradient(160deg, var(--mango), var(--mango-dark));
+    color:var(--ink); transform:scale(0.9);
+  }
+  .gugu-wrap.walking{ animation:walkBounce 0.3s ease-in-out infinite; }
+  @keyframes walkBounce{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-6px); }
+  }
 
   /* ---------- TOAST (보너스 안내) ---------- */
   .toast{
@@ -540,13 +578,21 @@
 
     <div class="travel-stage" id="travelStage" style="display:none;">
       <div class="gugu-wrap" id="gugu-travel"></div>
-      <div class="speech-bubble" id="travelText">다음으로 이동해볼까요?</div>
-      <button class="start-btn" id="travelBtn">다음으로 이동 ▶</button>
+      <div class="speech-bubble" id="travelText">방향키(▶)를 누르고 있으면 앞으로 걸어가요</div>
     </div>
 
     <div class="fork-stage" id="forkStage" style="display:none;">
-      <div class="speech-bubble">어떤 길로 갈까요?</div>
+      <div class="speech-bubble">방향키로 길을 고르고, 누르고 있으면 그 길로 들어가요</div>
       <div class="fork-options" id="forkOptions"></div>
+    </div>
+
+    <div class="move-progress" id="moveProgress" style="display:none;">
+      <div class="fill" id="moveProgressFill"></div>
+    </div>
+
+    <div class="dpad" id="dpad" style="display:none;">
+      <button class="dpad-btn" id="dpadLeft" aria-label="왼쪽">◀</button>
+      <button class="dpad-btn" id="dpadRight" aria-label="오른쪽">▶</button>
     </div>
   </div>
 
@@ -707,7 +753,9 @@ const state = {
   startTime: 0,
   typedInput: '',
   nextTierDiscount: false,
-  lastQuestion: null
+  lastQuestion: null,
+  travelProgress: 0,
+  forkLaneIndex: 1
 };
 
 function randInt(min, max){ return Math.floor(Math.random()*(max-min+1))+min; }
@@ -1039,7 +1087,111 @@ function updateRoundTrack(){
 // ---- 경로 노드 렌더 (오버월드 진행) ----
 let inputLocked = false;
 
+// ---- 방향키 / 가상 패드 이동 엔진 ----
+// 짧게 누르면(TAP_HOLD_THRESHOLD_MS 이내) '탭' = 갈림길에서 좌우로 길 선택
+// 그보다 길게 누르고 있으면 '홀드' = 앞으로 걷기(이동 구간) 또는 선택한 길로 진입(갈림길)
+const TRAVEL_HOLD_MS = 700;
+const TAP_HOLD_THRESHOLD_MS = 220;
+let heldDir = null;
+let pressTimer = null;
+let moveRafId = null;
+let lastMoveTime = 0;
+
+function setMoveUiVisible(show){
+  document.getElementById('dpad').style.display = show ? 'flex' : 'none';
+  document.getElementById('moveProgress').style.display = show ? 'block' : 'none';
+}
+function updateDpadPressedVisual(){
+  document.getElementById('dpadLeft').classList.toggle('pressed', heldDir==='left');
+  document.getElementById('dpadRight').classList.toggle('pressed', heldDir==='right');
+}
+function updateMoveProgressVisual(){
+  document.getElementById('moveProgressFill').style.width = (state.travelProgress*100) + '%';
+}
+function shiftForkLane(delta){
+  state.forkLaneIndex = Math.max(0, Math.min(2, state.forkLaneIndex + delta));
+  state.travelProgress = 0;
+  updateMoveProgressVisual();
+  document.querySelectorAll('.fork-btn').forEach((btn, idx)=>{
+    btn.classList.toggle('active', idx === state.forkLaneIndex);
+  });
+}
+function startMoveAccumulation(){
+  if(moveRafId) return;
+  const node = state.path[state.pathIndex];
+  if(node && node.type === 'travel' && !node.trap){ reactGugu('gugu-travel','cheer'); document.getElementById('gugu-travel').classList.add('walking'); }
+  lastMoveTime = performance.now();
+  moveRafId = requestAnimationFrame(moveLoop);
+}
+function stopMoveAccumulation(){
+  if(moveRafId){ cancelAnimationFrame(moveRafId); moveRafId = null; }
+  const el = document.getElementById('gugu-travel');
+  if(el) el.classList.remove('walking');
+}
+function moveLoop(now){
+  const dt = now - lastMoveTime;
+  lastMoveTime = now;
+  const node = state.path[state.pathIndex];
+
+  if(node && node.type === 'travel' && heldDir === 'right'){
+    state.travelProgress = Math.min(1, state.travelProgress + dt/TRAVEL_HOLD_MS);
+    updateMoveProgressVisual();
+    if(state.travelProgress >= 1){ moveRafId = null; completeTravelSegment(); return; }
+  } else if(node && node.type === 'fork' && heldDir){
+    state.travelProgress = Math.min(1, state.travelProgress + dt/TRAVEL_HOLD_MS);
+    updateMoveProgressVisual();
+    if(state.travelProgress >= 1){ moveRafId = null; commitForkChoice(); return; }
+  }
+
+  moveRafId = heldDir ? requestAnimationFrame(moveLoop) : null;
+}
+function onDirDown(dir){
+  if(heldDir === dir) return;
+  heldDir = dir;
+  updateDpadPressedVisual();
+  clearTimeout(pressTimer);
+  pressTimer = setTimeout(startMoveAccumulation, TAP_HOLD_THRESHOLD_MS);
+}
+function onDirUp(dir){
+  if(heldDir !== dir) return;
+  clearTimeout(pressTimer);
+  const node = state.path[state.pathIndex];
+  if(node && node.type === 'fork' && !moveRafId){
+    shiftForkLane(dir === 'left' ? -1 : 1);   // 짧은 탭 = 갈림길 좌우 이동
+  }
+  stopMoveAccumulation();
+  heldDir = null;
+  updateDpadPressedVisual();
+}
+function stopAllMovement(){
+  clearTimeout(pressTimer);
+  stopMoveAccumulation();
+  heldDir = null;
+  updateDpadPressedVisual();
+}
+function bindDpad(){
+  const leftBtn = document.getElementById('dpadLeft');
+  const rightBtn = document.getElementById('dpadRight');
+  leftBtn.addEventListener('pointerdown', (e)=>{ e.preventDefault(); onDirDown('left'); });
+  rightBtn.addEventListener('pointerdown', (e)=>{ e.preventDefault(); onDirDown('right'); });
+  [[leftBtn,'left'],[rightBtn,'right']].forEach(([btn,dir])=>{
+    ['pointerup','pointerleave','pointercancel'].forEach(evt=> btn.addEventListener(evt, ()=> onDirUp(dir)));
+  });
+  window.addEventListener('keydown', (e)=>{
+    if(e.repeat) return;
+    if(e.key==='ArrowRight' || e.key==='ArrowUp'){ onDirDown('right'); }
+    else if(e.key==='ArrowLeft' || e.key==='ArrowDown'){ onDirDown('left'); }
+  });
+  window.addEventListener('keyup', (e)=>{
+    if(e.key==='ArrowRight' || e.key==='ArrowUp'){ onDirUp('right'); }
+    else if(e.key==='ArrowLeft' || e.key==='ArrowDown'){ onDirUp('left'); }
+  });
+}
+bindDpad();
+
 function hideAllStages(){
+  stopAllMovement();
+  setMoveUiVisible(false);
   document.getElementById('travelStage').style.display = 'none';
   document.getElementById('forkStage').style.display = 'none';
   document.getElementById('battleStage').style.display = 'none';
@@ -1064,14 +1216,21 @@ function renderPathNode(){
   }
 }
 
+function completeTravelSegment(){
+  state.travelProgress = 0;
+  updateMoveProgressVisual();
+  state.pathIndex++;
+  renderPathNode();
+}
+
 function renderTravelStage(node){
   const stage = document.getElementById('travelStage');
-  const btn = document.getElementById('travelBtn');
   const text = document.getElementById('travelText');
   stage.style.display = 'flex';
+  state.travelProgress = 0;
 
   if(node.trap){
-    btn.style.display = 'none';
+    setMoveUiVisible(false);
     text.textContent = '앗, 함정에 걸렸어요! 😵';
     reactGugu('gugu-travel', 'sad');
     playTone(220, 0.15);
@@ -1080,25 +1239,35 @@ function renderTravelStage(node){
       setTimeout(()=>{ state.pathIndex++; renderPathNode(); }, 900);
     }
   } else {
-    btn.style.display = 'inline-block';
-    text.textContent = '다음으로 이동해볼까요?';
+    setMoveUiVisible(true);
+    updateMoveProgressVisual();
+    text.textContent = '방향키(▶)를 누르고 있으면 앞으로 걸어가요';
     reactGugu('gugu-travel', 'cheer');
-    btn.onclick = ()=>{ state.pathIndex++; renderPathNode(); };
   }
 }
 
 function renderForkStage(node){
   document.getElementById('forkStage').style.display = 'flex';
+  setMoveUiVisible(true);
+  state.forkLaneIndex = 1;
+  state.travelProgress = 0;
+  updateMoveProgressVisual();
   const wrap = document.getElementById('forkOptions');
   wrap.innerHTML = '';
   const labels = { easy:'쉬움', normal:'보통', hard:'어려움' };
-  TIER_ORDER.forEach(tier=>{
+  TIER_ORDER.forEach((tier, idx)=>{
     const btn = document.createElement('button');
-    btn.className = 'fork-btn ' + tier;
+    btn.className = 'fork-btn ' + tier + (idx===1 ? ' active' : '');
     btn.textContent = labels[tier];
-    btn.addEventListener('click', ()=> handleForkPick(tier));
+    btn.addEventListener('click', ()=>{ state.forkLaneIndex = idx; commitForkChoice(); });
     wrap.appendChild(btn);
   });
+}
+
+function commitForkChoice(){
+  state.travelProgress = 0;
+  updateMoveProgressVisual();
+  handleForkPick(TIER_ORDER[state.forkLaneIndex]);
 }
 
 function handleForkPick(tier){
