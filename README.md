@@ -2,7 +2,7 @@
 
 ## 폴더 구성
 ```
-gugu-battle-pwa/
+basicmath/
 ├── index.html      게임 본체
 ├── manifest.json    홈 화면 추가 시 앱 이름/아이콘 정의
 ├── sw.js            오프라인 캐싱 + 업데이트 처리
