@@ -220,6 +220,7 @@
     width:100%; max-width:760px; margin-top:6px; padding:0 10px;
   }
   .fighter{display:flex; flex-direction:column; align-items:center; gap:4px;}
+  .fighter .gugu-wrap{width:78px;}
   .monster-hp{width:70px; height:8px; background:rgba(255,255,255,0.15); border-radius:5px; overflow:hidden;}
   .monster-hp .fill{height:100%; width:100%; background:linear-gradient(90deg, var(--coral), var(--coral-dark)); transition:width .25s ease;}
   .monster-wrap{width:clamp(74px,11vw,100px); transition:transform .15s ease;}
@@ -549,13 +550,16 @@
     cursor:pointer;
   }
 
-  /* ---------- 태블릿 가로모드 시작 화면 축소 ----------
-     곱셈 모듈을 고르면 단 선택 그리드가 추가로 붙어 시작 화면 콘텐츠가 길어지는데,
-     태블릿 가로 높이(약 550~850px)에서는 그 늘어난 높이가 화면을 넘어서서
-     시작 버튼이 화면 아래로 밀려 가려지는 문제가 있었음.
+  /* ---------- 태블릿 가로모드 축소 (시작 화면 + 플레이 화면) ----------
+     곱셈 모듈을 고르면 단 선택 그리드가 추가로 붙어 시작 화면 콘텐츠가 길어지고,
+     플레이 화면에서는 덧셈·뺄셈·나눗셈(항상 키패드 입력)과 보스전(모든 모듈)의
+     숫자 키패드가 스피치버블+빈칸+3x3 키패드까지 쌓여 세로로 길어짐.
+     태블릿 가로 높이(약 500~850px)에서는 이 늘어난 높이가 화면을 넘어서서
+     시작 버튼이나 키패드 하단 버튼(확인/back 등 정답 입력에 꼭 필요한 버튼)이
+     화면 아래로 밀려 가려지는 문제가 있었음.
      실제 태블릿에서는 세로 공간보다 가로 공간이 넉넉하므로, 단 선택 버튼을
      한 줄로 넓게 펼치고(위 .dan-select 기본 스타일) 나머지 요소도 살짝 축소해
-     시작 버튼이 항상 화면 안에 들어오도록 함. */
+     시작 버튼/키패드가 항상 화면 안에 들어오도록 함. */
   @media (max-height: 850px) and (min-height: 501px) and (orientation: landscape){
     #screen-start{ gap:8px; }
     .gugu-wrap{ width:clamp(54px,8vw,80px); }
@@ -568,6 +572,20 @@
     .dan-select{ margin-top:2px; }
     .start-btn{ margin-top:2px; padding:10px 34px; font-size:clamp(16px,2.3vw,20px); }
     .rules-note{ font-size:11px; line-height:1.4; }
+
+    #screen-play{ padding-top:6px; }
+    .topbar{ gap:8px; }
+    .heart{ width:18px; height:18px; }
+    .battle-stage{ margin-top:4px; }
+    .fighter .gugu-wrap{ width:clamp(48px,7vw,64px); }
+    .monster-wrap{ width:clamp(56px,9vw,80px); }
+    .monster-wrap.boss{ width:clamp(80px,12vw,110px); }
+    .question-area{ margin:6px 0 3px; }
+    .speech-bubble{ padding:8px 18px; font-size:clamp(19px,3.8vw,30px); }
+    .boss-input-wrap{ gap:8px; margin-top:6px; }
+    .blank-box{ padding:4px 10px; font-size:clamp(19px,3.8vw,30px); }
+    .keypad{ grid-template-columns:repeat(3, 52px); gap:6px; }
+    .key{ height:40px; font-size:18px; }
   }
 
   /* ---------- 낮은 가로 화면(휴대폰 가로) 최적화 ----------
@@ -668,7 +686,7 @@
 
     <div class="battle-stage" id="battleStage">
       <div class="fighter">
-        <div class="gugu-wrap" id="gugu-play" style="width:78px;"></div>
+        <div class="gugu-wrap" id="gugu-play"></div>
         <span class="mascot-label" id="mascotLabelPlay" style="font-size:13px; color:var(--mint);">구구</span>
       </div>
       <div class="vs-label">VS</div>
