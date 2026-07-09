@@ -328,6 +328,29 @@
     box-shadow:0 4px 0 rgba(0,0,0,0.15);
   }
   .blank-box.active{ box-shadow:0 0 0 4px rgba(255,214,92,0.5), 0 4px 0 rgba(0,0,0,0.15); }
+
+  /* 보스전 전용 타임어택 바 — 일반 라운드에는 표시하지 않음 */
+  .boss-timer-wrap{
+    display:flex; align-items:center; gap:8px;
+  }
+  .boss-timer-track{
+    width:180px; height:10px;
+    background:rgba(255,255,255,0.15); border-radius:6px; overflow:hidden;
+  }
+  .boss-timer-track .fill{
+    height:100%; width:100%;
+    background:linear-gradient(90deg, var(--mint), var(--mango));
+    border-radius:6px;
+  }
+  .boss-timer-wrap.urgent .boss-timer-track .fill{
+    background:linear-gradient(90deg, var(--coral), var(--coral-dark));
+  }
+  .boss-timer-text{
+    font-family:'Jua', sans-serif; font-size:16px; color:var(--cream);
+    min-width:18px; text-align:center;
+  }
+  .boss-timer-wrap.urgent .boss-timer-text{ color:var(--coral); }
+
   .keypad{
     display:grid; grid-template-columns:repeat(3, 64px); gap:10px;
   }
@@ -586,6 +609,8 @@
     .blank-box{ padding:4px 10px; font-size:clamp(19px,3.8vw,30px); }
     .keypad{ grid-template-columns:repeat(3, 52px); gap:6px; }
     .key{ height:40px; font-size:18px; }
+    .boss-timer-track{ width:140px; height:8px; }
+    .boss-timer-text{ font-size:14px; }
   }
 
   /* ---------- 낮은 가로 화면(휴대폰 가로) 최적화 ----------
@@ -623,6 +648,9 @@
     .blank-box{ padding:2px 8px; font-size:clamp(15px,3.2vw,24px); }
     .keypad{ grid-template-columns:repeat(3, 40px); gap:4px; }
     .key{ height:26px; font-size:14px; border-radius:9px; }
+    .boss-timer-wrap{ gap:5px; }
+    .boss-timer-track{ width:110px; height:6px; }
+    .boss-timer-text{ font-size:12px; }
     .bubble{ width:clamp(46px,10vw,62px); height:clamp(46px,10vw,62px); font-size:clamp(15px,3.4vw,22px); }
 
     .move-progress{ bottom:calc(52px + env(safe-area-inset-bottom, 0px)); width:min(200px, 50vw); }
@@ -702,6 +730,10 @@
     <div class="play-area" id="playArea"></div>
 
     <div class="boss-input-wrap" id="bossInputWrap" style="display:none;">
+      <div class="boss-timer-wrap" id="bossTimerWrap" style="display:none;">
+        <div class="boss-timer-track"><div class="fill" id="bossTimerFill"></div></div>
+        <span class="boss-timer-text" id="bossTimerText">7</span>
+      </div>
       <div class="speech-bubble" id="bossQuestionText">? × ? = ?</div>
       <div class="blank-box active" id="bossInputBox">_</div>
       <div class="keypad" id="keypad"></div>
@@ -887,6 +919,7 @@ function renderMonster(isBoss, seedIndex){
    ============================================================ */
 const ROUND_LENGTH = 15;
 const BOSS_ROUNDS = [5, 10, 15];
+const BOSS_TIME_LIMIT_MS = 7000;   // 보스전(5·10·15라운드) 전용 타임어택 제한시간
 const MAX_LIVES = 5;
 const FORK_ROUNDS = [3, 8, 13];           // 이 조우 번호 직전에 갈림길이 나온다
 const CHAPTERS = [[1,5],[6,10],[11,15]];  // 보스 기준 3챕터 — 함정 배치 단위
@@ -1254,6 +1287,7 @@ function startRound(){
   document.getElementById('forkOverlay').style.display = 'none';
   document.getElementById('worldViewport').style.display = 'block';
   setMoveUiVisible(true);
+  clearBossTimer();
   updateCamera();
   checkArrival();
 }
@@ -1493,6 +1527,7 @@ function resumeWorldAfterEncounter(){
 
 function renderEncounter(node){
   inputLocked = false;
+  clearBossTimer();
   const isBoss = node.type === 'boss';
   document.getElementById('battleStage').style.display = 'flex';
   document.getElementById('normalQuestionArea').style.display = 'none';
@@ -1514,6 +1549,8 @@ function renderEncounter(node){
   } else {
     document.getElementById('bossInputWrap').style.display = 'flex';
     renderBossQuestion(node, q);
+    // 보스전 등장 배너(1.1초)가 끝난 뒤부터 7초 타임어택 시작 — 일반 라운드는 시간제한 없음
+    if(isBoss) startBossTimerDelayed(node, 1100);
   }
 }
 
@@ -1577,6 +1614,67 @@ function renderBossQuestion(node, q){
   buildKeypad();
 }
 
+// ---- 보스전 타임어택(7초) ----
+let bossTimerInterval = null;
+let bossTimerStartTimeout = null;
+let bossTimerDeadline = null;
+
+function clearBossTimer(){
+  if(bossTimerStartTimeout){ clearTimeout(bossTimerStartTimeout); bossTimerStartTimeout = null; }
+  if(bossTimerInterval){ clearInterval(bossTimerInterval); bossTimerInterval = null; }
+  bossTimerDeadline = null;
+  const wrap = document.getElementById('bossTimerWrap');
+  if(wrap){ wrap.style.display = 'none'; wrap.classList.remove('urgent'); }
+}
+
+function startBossTimerDelayed(node, delay){
+  clearBossTimer();
+  bossTimerStartTimeout = setTimeout(()=>{
+    bossTimerStartTimeout = null;
+    if(state.path[state.pathIndex] === node) startBossTimer();
+  }, delay);
+}
+
+function startBossTimer(){
+  if(bossTimerInterval){ clearInterval(bossTimerInterval); bossTimerInterval = null; }
+  const wrap = document.getElementById('bossTimerWrap');
+  const fill = document.getElementById('bossTimerFill');
+  const text = document.getElementById('bossTimerText');
+  wrap.style.display = 'flex';
+  wrap.classList.remove('urgent');
+  bossTimerDeadline = Date.now() + BOSS_TIME_LIMIT_MS;
+
+  const tick = ()=>{
+    const remain = Math.max(0, bossTimerDeadline - Date.now());
+    fill.style.width = (remain/BOSS_TIME_LIMIT_MS*100) + '%';
+    text.textContent = Math.ceil(remain/1000);
+    wrap.classList.toggle('urgent', remain > 0 && remain <= 2000);
+    if(remain <= 0){
+      clearInterval(bossTimerInterval);
+      bossTimerInterval = null;
+      handleBossTimeout();
+    }
+  };
+  tick();
+  bossTimerInterval = setInterval(tick, 100);
+}
+
+function handleBossTimeout(){
+  if(inputLocked) return;
+  const node = state.path[state.pathIndex];
+  if(!node) return;
+  clearBossTimer();
+  const box = document.getElementById('bossInputBox');
+  box.classList.add('wrong-fade');
+  setTimeout(()=> box.classList.remove('wrong-fade'), 350);
+  showToast('시간 초과예요! ⏰');
+  onWrong(node.question, ()=>{
+    state.typedInput = '';
+    document.getElementById('bossInputBox').textContent = '_';
+    startBossTimer();
+  });
+}
+
 function expectedBlankValue(node){
   const q = node.question;
   if(node.blankSlot === 'a') return q.a;
@@ -1616,14 +1714,17 @@ function submitBossAnswer(){
   const typed = parseInt(state.typedInput, 10);
   if(state.typedInput !== '' && typed === correctVal){
     inputLocked = true;
+    clearBossTimer();
     onCorrect();
   } else {
+    clearBossTimer();
     const box = document.getElementById('bossInputBox');
     box.classList.add('wrong-fade');
     setTimeout(()=> box.classList.remove('wrong-fade'), 350);
     onWrong(node.question, ()=>{
       state.typedInput = '';
       document.getElementById('bossInputBox').textContent = '_';
+      if(node.type === 'boss') startBossTimer();
     });
   }
 }
