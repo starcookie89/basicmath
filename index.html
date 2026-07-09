@@ -547,6 +547,55 @@
     font-size:17px;
     cursor:pointer;
   }
+
+  /* ---------- 낮은 가로 화면(휴대폰 가로) 최적화 ----------
+     태블릿 가로(높이 700px+) 기준으로 짠 여백/크기가 휴대폰 가로(높이 350~430px)에서는
+     내용이 화면 높이를 넘어 위/아래가 잘리는 문제가 있어, 짧은 화면에서 전반적으로 축소. */
+  @media (max-height: 500px) and (orientation: landscape){
+    .screen{ padding:6px; }
+    #screen-start{ gap:6px; }
+    .title-wrap{ margin-bottom:0; }
+    .title-wrap h1{ font-size:clamp(18px,4.2vw,26px); }
+    .title-wrap p{ font-size:clamp(10px,1.8vw,13px); margin:2px 0 0; }
+    .gugu-wrap{ width:clamp(46px,9vw,64px); }
+    .module-select{ gap:6px; margin-top:2px; }
+    .module-btn{ padding:4px 3px; gap:2px; font-size:clamp(10px,1.6vw,13px); }
+    .module-btn .module-icon{ width:clamp(26px,5.5vw,36px); }
+    .dan-select{ gap:6px; margin-top:2px; }
+    .dan-btn{ font-size:clamp(13px,2.4vw,18px); }
+    .dan-btn.all{ height:32px; font-size:clamp(11px,1.8vw,15px); }
+    .start-btn{ margin-top:2px; padding:7px 26px; font-size:clamp(14px,2vw,18px); }
+    .rules-note{ font-size:10px; line-height:1.25; }
+
+    #screen-play{ padding-top:4px; }
+    .topbar{ gap:6px; }
+    .heart{ width:16px; height:16px; }
+    .round-track{ height:7px; }
+    .round-label{ font-size:11px; }
+    .combo-badge{ font-size:11px; padding:2px 9px; }
+    .battle-stage{ margin-top:2px; }
+    .gugu-wrap.walking, .fighter .gugu-wrap{ width:clamp(46px,8vw,64px); }
+    .monster-wrap{ width:clamp(46px,8vw,66px); }
+    .monster-wrap.boss{ width:clamp(66px,11vw,90px); }
+    .question-area{ margin:4px 0 2px; gap:8px; }
+    .speech-bubble{ padding:6px 14px; font-size:clamp(15px,3.2vw,24px); }
+    .boss-input-wrap{ gap:4px; margin-top:2px; }
+    .blank-box{ padding:2px 8px; font-size:clamp(15px,3.2vw,24px); }
+    .keypad{ grid-template-columns:repeat(3, 40px); gap:4px; }
+    .key{ height:26px; font-size:14px; border-radius:9px; }
+    .bubble{ width:clamp(46px,10vw,62px); height:clamp(46px,10vw,62px); font-size:clamp(15px,3.4vw,22px); }
+
+    .move-progress{ bottom:calc(52px + env(safe-area-inset-bottom, 0px)); width:min(200px, 50vw); }
+    .dpad{ bottom:calc(8px + env(safe-area-inset-bottom, 0px)); gap:18px; }
+    .dpad-btn{ width:44px; height:44px; font-size:18px; }
+
+    .stars{ gap:4px; margin:2px 0; }
+    .star-icon{ font-size:clamp(20px,4.4vw,28px); }
+    .result-stats{ padding:8px 16px; font-size:clamp(11px,1.8vw,15px); line-height:1.4; }
+    .miss-list{ font-size:11px; max-height:44px; }
+    .btn-row{ margin-top:2px; gap:8px; }
+    .secondary-btn{ padding:7px 18px; font-size:13px; }
+  }
 </style>
 </head>
 <body>
@@ -1134,6 +1183,11 @@ function startRound(){
   showScreen('screen-play');
   updateRoundTrack();
   buildWorldMarkers();
+  document.getElementById('battleStage').style.display = 'none';
+  document.getElementById('normalQuestionArea').style.display = 'none';
+  document.getElementById('playArea').style.display = 'none';
+  document.getElementById('bossInputWrap').style.display = 'none';
+  document.getElementById('forkOverlay').style.display = 'none';
   document.getElementById('worldViewport').style.display = 'block';
   setMoveUiVisible(true);
   updateCamera();
