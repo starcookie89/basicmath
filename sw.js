@@ -1,7 +1,7 @@
 // 이 숫자를 올리면(v1 -> v2) 학습자 태블릿에서 예전 캐시가 자동으로 지워지고
 // 다음 접속 때 최신 파일을 새로 받아옵니다.
 // -> 게임 내용을 수정해서 다시 배포할 때마다 이 버전을 1씩 올려주세요.
-const CACHE_VERSION = 'basicmath-v8';
+const CACHE_VERSION = 'basicmath-v9';
 const CORE_ASSETS = [
   './',
   './index.html',

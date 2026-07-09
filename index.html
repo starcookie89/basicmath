@@ -761,6 +761,29 @@ function nanaSVG(){
   return buildMascotSVG({ body:'#B79CFF', ring:'#8B6EDB', antenna:'#FFD65C', arms:2,
     glyph:'<circle cx="100" cy="140" r="4" fill="#2A1B45"/><line x1="90" y1="150" x2="110" y2="150" stroke="#2A1B45" stroke-width="6" stroke-linecap="round"/><circle cx="100" cy="160" r="4" fill="#2A1B45"/>' });
 }
+// 시작 화면 대표 아이콘 — 아직 모듈을 고르기 전, 사칙연산 4개를 함께 대표하는 중립 로고
+// (모듈 선택 마스코트와 달리 특정 캐릭터가 아니라 +−×÷ 4분할 배지 형태)
+function heroLogoSVG(){
+  return `
+  <svg viewBox="0 0 200 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <clipPath id="hero-round"><rect x="4" y="4" width="192" height="192" rx="36"/></clipPath>
+    </defs>
+    <g clip-path="url(#hero-round)">
+      <rect x="4" y="4" width="94" height="94" fill="#5EEAD4"/>
+      <rect x="102" y="4" width="94" height="94" fill="#FF8FAB"/>
+      <rect x="4" y="102" width="94" height="94" fill="#FFB627"/>
+      <rect x="102" y="102" width="94" height="94" fill="#B79CFF"/>
+    </g>
+    <rect x="4" y="4" width="192" height="192" rx="36" fill="none" stroke="#FFF8ED" stroke-width="6"/>
+    <line x1="100" y1="4" x2="100" y2="196" stroke="#FFF8ED" stroke-width="6"/>
+    <line x1="4" y1="100" x2="196" y2="100" stroke="#FFF8ED" stroke-width="6"/>
+    <text x="51" y="53" font-family="'Jua',sans-serif" font-size="50" fill="#2A1B45" text-anchor="middle" dominant-baseline="central">+</text>
+    <text x="149" y="53" font-family="'Jua',sans-serif" font-size="50" fill="#2A1B45" text-anchor="middle" dominant-baseline="central">−</text>
+    <text x="51" y="151" font-family="'Jua',sans-serif" font-size="50" fill="#2A1B45" text-anchor="middle" dominant-baseline="central">×</text>
+    <text x="149" y="151" font-family="'Jua',sans-serif" font-size="50" fill="#2A1B45" text-anchor="middle" dominant-baseline="central">÷</text>
+  </svg>`;
+}
 function applyMascot(moduleId){
   const mod = MODULES[moduleId];
   document.querySelectorAll('#gugu-start, #gugu-play, #gugu-result, #gugu-gameover, #gugu-world').forEach(el=>{
@@ -769,7 +792,8 @@ function applyMascot(moduleId){
   const label = document.getElementById('mascotLabelPlay');
   if(label) label.textContent = mod.mascotName;
 }
-document.querySelectorAll('#gugu-start, #gugu-play, #gugu-result, #gugu-gameover, #gugu-world').forEach(el=>{
+document.getElementById('gugu-start').innerHTML = heroLogoSVG();
+document.querySelectorAll('#gugu-play, #gugu-result, #gugu-gameover, #gugu-world').forEach(el=>{
   el.innerHTML = guguSVG();
 });
 
