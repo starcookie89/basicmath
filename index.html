@@ -84,21 +84,23 @@
     margin:6px 0 0; font-size:clamp(14px,2.1vw,18px); color:var(--mint);
   }
 
+  /* 이 게임은 가로모드 전용이라 세로 공간이 늘 빠듯함 — 8개 단 버튼을
+     한 줄(가로로 넉넉한 공간 활용)로 배치해 세로 높이를 최소화 */
   .dan-select{
     display:grid;
-    grid-template-columns:repeat(4, 1fr);
-    gap:10px;
-    width:min(560px, 90vw);
+    grid-template-columns:repeat(8, 1fr);
+    gap:8px;
+    width:min(640px, 92vw);
     margin-top:4px;
   }
   .dan-btn{
-    aspect-ratio:1/1;
-    border:none; border-radius:20px;
+    height:clamp(44px,8vw,64px);
+    border:none; border-radius:16px;
     background:linear-gradient(160deg, #ffffff20, #ffffff05), var(--bg-deep3);
     border:3px solid rgba(255,255,255,0.15);
     color:var(--cream);
     font-family:'Jua', sans-serif;
-    font-size:clamp(18px,3vw,26px);
+    font-size:clamp(14px,2.2vw,20px);
     display:flex; align-items:center; justify-content:center;
     cursor:pointer;
     transition:transform .12s ease, background .15s ease, border-color .15s ease;
@@ -111,9 +113,8 @@
     box-shadow:0 0 0 4px rgba(94,234,212,0.25);
   }
   .dan-btn.all{
-    grid-column:span 4;
-    aspect-ratio:auto;
-    height:50px;
+    grid-column:span 8;
+    height:44px;
     font-size:clamp(15px,2.3vw,19px);
     background:linear-gradient(160deg, var(--pink), var(--pink-dark));
     color:var(--ink);
@@ -548,12 +549,33 @@
     cursor:pointer;
   }
 
+  /* ---------- 태블릿 가로모드 시작 화면 축소 ----------
+     곱셈 모듈을 고르면 단 선택 그리드가 추가로 붙어 시작 화면 콘텐츠가 길어지는데,
+     태블릿 가로 높이(약 550~850px)에서는 그 늘어난 높이가 화면을 넘어서서
+     시작 버튼이 화면 아래로 밀려 가려지는 문제가 있었음.
+     실제 태블릿에서는 세로 공간보다 가로 공간이 넉넉하므로, 단 선택 버튼을
+     한 줄로 넓게 펼치고(위 .dan-select 기본 스타일) 나머지 요소도 살짝 축소해
+     시작 버튼이 항상 화면 안에 들어오도록 함. */
+  @media (max-height: 850px) and (min-height: 501px) and (orientation: landscape){
+    #screen-start{ gap:8px; }
+    .gugu-wrap{ width:clamp(54px,8vw,80px); }
+    .title-wrap{ margin-bottom:0; }
+    .title-wrap h1{ font-size:clamp(24px,4.8vw,36px); }
+    .title-wrap p{ font-size:clamp(12px,1.9vw,15px); margin:4px 0 0; }
+    .module-select{ margin-top:2px; }
+    .module-btn{ padding:7px 4px; }
+    .module-btn .module-icon{ width:clamp(32px,6vw,44px); }
+    .dan-select{ margin-top:2px; }
+    .start-btn{ margin-top:2px; padding:10px 34px; font-size:clamp(16px,2.3vw,20px); }
+    .rules-note{ font-size:11px; line-height:1.4; }
+  }
+
   /* ---------- 낮은 가로 화면(휴대폰 가로) 최적화 ----------
      태블릿 가로(높이 700px+) 기준으로 짠 여백/크기가 휴대폰 가로(높이 350~430px)에서는
      내용이 화면 높이를 넘어 위/아래가 잘리는 문제가 있어, 짧은 화면에서 전반적으로 축소. */
   @media (max-height: 500px) and (orientation: landscape){
-    .screen{ padding:6px; }
-    #screen-start{ gap:6px; }
+    .screen{ padding:4px; }
+    #screen-start{ gap:4px; }
     .title-wrap{ margin-bottom:0; }
     .title-wrap h1{ font-size:clamp(18px,4.2vw,26px); }
     .title-wrap p{ font-size:clamp(10px,1.8vw,13px); margin:2px 0 0; }
