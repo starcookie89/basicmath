@@ -683,7 +683,7 @@
     <div class="module-select" id="moduleSelect"></div>
     <div class="dan-select" id="danSelect" style="display:none;"></div>
     <button class="start-btn" id="startBtn" disabled>모험 시작!</button>
-    <div class="rules-note">생명력은 하트 5개! 문제를 틀리면 하트가 줄어들고, 다 사라지면 1라운드부터 다시 시작해요.<br>5 · 10 · 15라운드는 보스전 — 빈칸에 들어갈 숫자를 직접 입력해요.<br>갈림길에서 난이도를 고르고, 길 위의 함정과 회복 이벤트도 만나보세요!</div>
+    <div class="rules-note">생명력은 하트 5개! 문제를 틀리면 하트가 줄어들고, 다 사라지면 1라운드부터 다시 시작해요.<br>5 · 10 · 15라운드는 보스전 — 빈칸에 들어갈 숫자를 직접 입력해요.<br>갈림길에서 난이도를 고르고, 어려운 문제를 맞히면 생명력을 회복할 수도 있어요!</div>
     <button class="secondary-btn" id="installBtn" style="display:none; margin-top:2px;">📲 홈 화면에 추가하기</button>
     <div class="rules-note" id="iosInstallHint" style="display:none;">
       하단 <b>공유 버튼</b>을 누른 뒤 <b>"홈 화면에 추가"</b>를 선택하면 앱처럼 바로 실행할 수 있어요!
@@ -922,10 +922,7 @@ const BOSS_ROUNDS = [5, 10, 15];
 const BOSS_TIME_LIMIT_MS = 7000;   // 보스전(5·10·15라운드) 전용 타임어택 제한시간
 const MAX_LIVES = 5;
 const FORK_ROUNDS = [3, 8, 13];           // 이 조우 번호 직전에 갈림길이 나온다
-const CHAPTERS = [[1,5],[6,10],[11,15]];  // 보스 기준 3챕터 — 함정 배치 단위
 const TIER_ORDER = ['easy','normal','hard'];
-const TRAP_CHANCE_PER_CHAPTER = 0.5;
-const MIN_GAP_BETWEEN_TRAPS = 2;
 const HEAL_ON_HARD_CHANCE = 0.35;
 const EASE_NEXT_ON_HARD_CHANCE = 0.5;
 const SEGMENT_PX = 260;            // 노드 하나가 차지하는 오버월드 가로 폭
@@ -1137,25 +1134,6 @@ function shuffle(arr){
 }
 
 // ---- 경로(오버월드) 생성 ----
-function rollTrapSegments(){
-  const trapSet = new Set();
-  let lastTrapIdx = -Infinity;
-  CHAPTERS.forEach(([startEnc, endEnc]) => {
-    const eligible = [];
-    for(let seg = startEnc-1; seg <= endEnc-1; seg++){
-      if(seg === 0) continue;                                  // 런의 첫 이동 구간은 함정 제외
-      if(seg - lastTrapIdx < MIN_GAP_BETWEEN_TRAPS) continue;   // 이전 함정 이후 최소 간격 확보
-      eligible.push(seg);
-    }
-    // 챕터(보스 기준 5조우)당 최대 1회
-    if(eligible.length && Math.random() < TRAP_CHANCE_PER_CHAPTER){
-      const idx = eligible[Math.floor(Math.random()*eligible.length)];
-      trapSet.add(idx);
-      lastTrapIdx = idx;
-    }
-  });
-  return trapSet;
-}
 // 덧셈/뺄셈은 15단계에 걸쳐 점점 어려워짐 — 1~9단계는 한자리+한자리, 10단계부터 두자리+두자리.
 // (갈림길에서 직접 고른 난이도, 보스 난이도는 이 기본값과 무관하게 그대로 유지됨)
 const PROGRESSIVE_TIER_MODULES = ['add', 'sub'];
@@ -1168,11 +1146,10 @@ function defaultTierForEncounter(encounterNum, isBoss){
   return 'normal';
 }
 function buildPathNodes(){
-  const trapSet = rollTrapSegments();
   const nodes = [];
   for(let i=0; i<ROUND_LENGTH; i++){
     const encounterNum = i+1;
-    nodes.push({ type:'travel', segIdx:i, trap: trapSet.has(i) });
+    nodes.push({ type:'travel', segIdx:i });
     if(FORK_ROUNDS.includes(encounterNum)){
       nodes.push({ type:'fork' });
     }
@@ -1206,7 +1183,7 @@ function buildWorldMarkers(){
       track.appendChild(marker);
       seed++;
     }
-    // travel(함정 포함)/fork는 시각 마커 없음 — 함정은 예고 없이 발동, 갈림길은 도착 시 오버레이로만 표시
+    // travel/fork는 시각 마커 없음 — 갈림길은 도착 시 오버레이로만 표시
   });
 }
 function updateCamera(){
@@ -1439,7 +1416,7 @@ function bindDpad(){
 }
 bindDpad();
 
-// ---- 조우/갈림길/함정 도착 판정 ----
+// ---- 조우/갈림길 도착 판정 ----
 function checkArrival(){
   let guard = 0;
   while(guard++ < 5){
@@ -1447,7 +1424,6 @@ function checkArrival(){
     if(!node || state.worldX < node.worldX) return;
     if(node.type === 'fork'){ pauseForFork(node); return; }
     if(node.type === 'travel'){
-      if(node.trap){ triggerTrap(node); return; }
       state.pathIndex++;
       if(state.pathIndex >= state.path.length){ endRound(); return; }
       continue;
@@ -1488,22 +1464,6 @@ function commitForkChoice(){
   state.pathIndex++;
   state.paused = false; state.pausedFor = null;
   checkArrival();
-}
-
-function triggerTrap(node){
-  state.paused = true; state.pausedFor = 'trap';
-  stopAllMovement();
-  reactGugu('gugu-world', 'sad');
-  playTone(220, 0.15);
-  loseLife();
-  showToast('앗, 함정에 걸렸어요! 😵');
-  if(state.lives > 0){
-    setTimeout(()=>{
-      state.pathIndex++;
-      state.paused = false; state.pausedFor = null;
-      checkArrival();
-    }, 900);
-  }
 }
 
 function pauseForEncounter(node){
